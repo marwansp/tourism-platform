@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Booking Cancellation - Tourism Platform</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #e74c3c; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { padding: 30px; background-color: #f8f9fa; border-radius: 0 0 8px 8px; }
+        .booking-details { background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #e74c3c; }
+        .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .detail-label { font-weight: bold; color: #2c3e50; }
+        .detail-value { color: #34495e; }
+        .alert { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
+        .refund-info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; padding: 15px; border-radius: 5px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 Tourism Platform</h1>
+            <h2>Booking Cancellation Notice</h2>
+        </div>
+        <div class="content">
+            <p>Dear {{ customer_name }},</p>
+            
+            <div class="alert">
+                <strong>Important Notice:</strong> We regret to inform you that your booking has been cancelled.
+            </div>
+            
+            <p>We sincerely apologize for any inconvenience this may cause. Below are the details of your cancelled booking:</p>
+            
+            <div class="booking-details">
+                <h3>Cancelled Booking Details</h3>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Booking ID:</span>
+                    <span class="detail-value">{{ booking_id }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Tour:</span>
+                    <span class="detail-value">{{ tour_title }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Start Date:</span>
+                    <span class="detail-value">{{ start_date }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">End Date:</span>
+                    <span class="detail-value">{{ end_date }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Duration:</span>
+                    <span class="detail-value">{{ duration_days }} day{{ 's' if duration_days > 1 else '' }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Participants:</span>
+                    <span class="detail-value">{{ number_of_participants }} person{{ 's' if number_of_participants > 1 else '' }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Total Amount:</span>
+                    <span class="detail-value" style="font-size: 18px; font-weight: bold; color: #e74c3c;">${{ total_price }}</span>
+                </div>
+            </div>
+            
+            <div class="refund-info">
+                <h4>💰 Refund Information</h4>
+                <p>A full refund of <strong>${{ total_price }}</strong> will be processed within 5-7 business days to your original payment method.</p>
+                <p>You will receive a separate email confirmation once the refund has been processed.</p>
+            </div>
+            
+            <p><strong>Reason for Cancellation:</strong></p>
+            <p>This cancellation may be due to unforeseen circumstances such as weather conditions, insufficient bookings, or operational requirements. We understand this is disappointing and we sincerely apologize.</p>
+            
+            <p><strong>What's Next:</strong></p>
+            <ul>
+                <li>Your refund will be processed automatically</li>
+                <li>You can browse our other available tours on our website</li>
+                <li>Contact us if you need assistance rebooking a similar tour</li>
+                <li>We'll prioritize your future bookings as a valued customer</li>
+            </ul>
+            
+            <p>If you have any questions or concerns about this cancellation, please don't hesitate to contact our customer service team. We're here to help and would be happy to assist you with alternative tour options.</p>
+            
+            <p>Thank you for your understanding, and we hope to serve you again in the future.</p>
+            
+            <p>Best regards,<br>
+            The Tourism Platform Team</p>
+        </div>
+        <div class="footer">
+            <p>If you have any questions, please contact us at info@tourismplatform.com</p>
+            <p>© 2024 Tourism Platform. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

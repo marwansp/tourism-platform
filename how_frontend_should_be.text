@@ -1,0 +1,160 @@
+Got it ✅ — that’s an excellent set of requirements, and it changes how we design the Frontend Service slightly — in a good way.
+Let’s build something that is traditional, beautiful, user-friendly, multilingual, and ad-friendly.
+
+🟩 Detailed Plan for the Frontend Service (React SPA)
+1️⃣ Design Approach (Traditional + Moroccan Style)
+
+Since you want a traditional Moroccan look but also a professional, ad-friendly website, here’s the plan:
+
+Color Palette:
+Warm Moroccan tones: terracotta, desert gold, deep blue, white background (for readability)
+
+Typography:
+Clean, readable font (like Inter or Roboto) — must support Latin characters (EN/FR)
+
+Layout:
+
+Hero section with big banner image (desert, medina, or your vehicles)
+
+Simple top navigation (Home – Tours – Gallery – Booking – Contact)
+
+Footer with contact info, social links (Instagram, WhatsApp, etc.)
+
+Mobile First:
+Design must be responsive (mobile, tablet, desktop)
+
+Ad-Friendly:
+
+Clean sections where Google Ads or Meta Pixel can be inserted without disturbing UX
+
+Respect good CLS (Cumulative Layout Shift) for SEO
+
+2️⃣ Multilingual Support (EN + FR)
+
+Use react-i18next for internationalization
+
+Keep all texts in /locales/en.json and /locales/fr.json
+
+Toggle language with a button in the navbar (EN | FR)
+
+Default to browser language (if available)
+
+3️⃣ User Experience (UX)
+
+Minimal Clicks:
+A user should find a tour and book in ≤3 clicks
+
+Clear Pricing:
+Show prices upfront — tourists appreciate transparency
+
+Simple Booking Form:
+Only ask for essential info (Name, Email, Date, Number of People)
+
+4️⃣ Structure of the Website
+Page	Sections
+Home	Hero banner (Moroccan scenery), Intro text, Featured Tours, CTA button (“Book Now”)
+Tours	List of all tours (grid layout, image + title + price + "View Details")
+Tour Details	Large image, description, price, booking button
+Booking	Form to submit booking request (calls Booking Service)
+Gallery	Grid of images from Media Service
+Contact	Contact info, simple form (calls Messaging Service)
+5️⃣ Frontend Tech Choices
+Feature	Choice
+Framework	React (Vite or CRA)
+Styling	TailwindCSS (easy, responsive)
+i18n (translations)	react-i18next
+API calls	Axios or React Query
+Routing	React Router
+Ads Integration	Google Ads script + Facebook Pixel script
+SEO	React Helmet (meta tags for tours, pages)
+6️⃣ Example File Structure
+frontend/
+├── public/
+│   └── index.html
+├── src/
+│   ├── pages/
+│   │   ├── HomePage.tsx
+│   │   ├── ToursPage.tsx
+│   │   ├── TourDetailsPage.tsx
+│   │   ├── BookingPage.tsx
+│   │   └── ContactPage.tsx
+│   ├── components/
+│   │   ├── Navbar.tsx
+│   │   ├── Footer.tsx
+│   │   └── TourCard.tsx
+│   ├── i18n/
+│   │   ├── en.json
+│   │   └── fr.json
+│   ├── api/
+│   │   ├── tours.ts
+│   │   ├── bookings.ts
+│   │   └── notifications.ts
+│   └── App.tsx
+└── package.json
+
+7️⃣ Example of Translation File
+
+/src/i18n/en.json
+
+{
+  "navbar": {
+    "home": "Home",
+    "tours": "Tours",
+    "gallery": "Gallery",
+    "booking": "Booking",
+    "contact": "Contact"
+  },
+  "home": {
+    "title": "Discover Morocco with Us",
+    "cta": "Book Your Trip Now"
+  }
+}
+
+
+/src/i18n/fr.json
+
+{
+  "navbar": {
+    "home": "Accueil",
+    "tours": "Excursions",
+    "gallery": "Galerie",
+    "booking": "Réserver",
+    "contact": "Contact"
+  },
+  "home": {
+    "title": "Découvrez le Maroc avec nous",
+    "cta": "Réservez votre voyage maintenant"
+  }
+}
+
+8️⃣ Integration with Microservices
+
+Tours Page: GET /tours → display grid
+
+Tour Details: GET /tours/:id → show tour info
+
+Booking Form: POST /bookings → submit booking
+
+Gallery: GET /gallery → show images
+
+Contact: POST /notify/email → send message
+
+9️⃣ Advertising Readiness
+
+Add <script> for Google Ads / Meta Pixel in index.html
+
+Reserve fixed sections for ads (sidebar or between sections on desktop)
+
+Make sure they don’t break layout or shift content too much
+
+✅ Why This Plan Works
+
+Respects Moroccan style (visual identity + warm colors)
+
+Easy for tourists (few clicks, mobile-friendly)
+
+Supports English & French
+
+SEO + Ads ready for Google/Meta campaigns
+
+Clean modular code for future growth

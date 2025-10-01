@@ -1,0 +1,139 @@
+from pydantic import BaseModel, Field, validator
+from typing import Optional, List
+from datetime import datetime
+from decimal import Decimal
+
+class TourImageBase(BaseModel):
+    """Base schema for tour images"""
+    image_url: str = Field(..., description="URL to the image")
+    is_main: bool = Field(False, description="Whether this is the main image")
+    display_order: int = Field(0, description="Display order for image gallery")
+    alt_text: Optional[str] = Field(None, max_length=255, description="Alt text for accessibility")
+
+class TourImageCreate(TourImageBase):
+    """Schema for creating a new tour image"""
+    pass
+
+class TourImageResponse(TourImageBase):
+    """Schema for tour image response"""
+    id: str
+    tour_id: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+    
+    @validator('id', 'tour_id', pre=True)
+    def convert_uuid_to_string(cls, v):
+        """Convert UUID to string for JSON serialization"""
+        return str(v) if v else None
+
+class TourBase(BaseModel):
+    """Base tour schema with common fields"""
+    title: str = Field(..., min_length=1, max_length=200, description="Tour title")
+    description: str = Field(..., min_length=10, description="Detailed tour description")
+    price: Decimal = Field(..., gt=0, description="Price per person in MAD")
+    duration: str = Field(..., min_length=1, max_length=50, description="Tour duration (e.g., '3 days / 2 nights')")
+    location: str = Field(..., min_length=1, max_length=100, description="Tour location")
+    max_participants: int = Field(..., gt=0, le=50, description="Maximum number of participants")
+    difficulty_level: str = Field(..., description="Difficulty level: Easy, Moderate, or Challenging")
+    includes: Optional[List[str]] = Field(None, description="List of what's included in the tour")
+    available_dates: Optional[List[str]] = Field(None, description="List of available dates")
+
+    @validator('price')
+    def validate_price(cls, v):
+        """Ensure price has maximum 2 decimal places"""
+        if v.as_tuple().exponent < -2:
+            raise ValueError('Price cannot have more than 2 decimal places')
+        return v
+
+    @validator('difficulty_level')
+    def validate_difficulty(cls, v):
+        """Validate difficulty level"""
+        allowed_levels = ['Easy', 'Moderate', 'Challenging']
+        if v not in allowed_levels:
+            raise ValueError(f'Difficulty level must be one of: {", ".join(allowed_levels)}')
+        return v
+
+class TourCreate(TourBase):
+    """Schema for creating a new tour"""
+    images: Optional[List[TourImageCreate]] = Field(None, description="List of tour images")
+
+class TourUpdate(BaseModel):
+    """Schema for updating an existing tour (all fields optional)"""
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
+    description: Optional[str] = Field(None, min_length=10)
+    price: Optional[Decimal] = Field(None, gt=0)
+    duration: Optional[str] = Field(None, min_length=1, max_length=50)
+    location: Optional[str] = Field(None, min_length=1, max_length=100)
+    max_participants: Optional[int] = Field(None, gt=0, le=50)
+    difficulty_level: Optional[str] = None
+    includes: Optional[List[str]] = None
+    available_dates: Optional[List[str]] = None
+    images: Optional[List[TourImageCreate]] = Field(None, description="List of tour images")
+
+    @validator('price')
+    def validate_price(cls, v):
+        """Ensure price has maximum 2 decimal places"""
+        if v and v.as_tuple().exponent < -2:
+            raise ValueError('Price cannot have more than 2 decimal places')
+        return v
+
+    @validator('difficulty_level')
+    def validate_difficulty(cls, v):
+        """Validate difficulty level"""
+        if v is not None:
+            allowed_levels = ['Easy', 'Moderate', 'Challenging']
+            if v not in allowed_levels:
+                raise ValueError(f'Difficulty level must be one of: {", ".join(allowed_levels)}')
+        return v
+
+class TourResponse(TourBase):
+    """Schema for tour response (includes ID and timestamps)"""
+    id: str
+    created_at: datetime
+    updated_at: datetime
+    images: List[TourImageResponse] = Field(default_factory=list, description="List of tour images")
+
+    class Config:
+        from_attributes = True
+    
+    @validator('id', pre=True)
+    def convert_uuid_to_string(cls, v):
+        """Convert UUID to string for JSON serialization"""
+        return str(v) if v else None
+
+class TourReviewBase(BaseModel):
+    """Base schema for tour reviews"""
+    rating: int = Field(..., ge=1, le=5, description="Rating from 1 to 5 stars")
+    review_text: Optional[str] = Field(None, max_length=1000, description="Review text (optional)")
+
+class TourReviewCreate(TourReviewBase):
+    """Schema for creating a new review"""
+    customer_name: str = Field(..., min_length=1, max_length=100, description="Customer name")
+
+class TourReviewResponse(TourReviewBase):
+    """Schema for review response"""
+    id: str
+    customer_name: str
+    created_at: datetime
+    is_verified: bool
+
+    class Config:
+        from_attributes = True
+    
+    @validator('id', pre=True)
+    def convert_uuid_to_string(cls, v):
+        """Convert UUID to string for JSON serialization"""
+        return str(v) if v else None
+
+class TourDetailResponse(TourResponse):
+    """Schema for detailed tour response with full image gallery and reviews"""
+    reviews: List[TourReviewResponse] = Field(default_factory=list, description="List of tour reviews")
+    average_rating: Optional[float] = Field(None, description="Average rating from reviews")
+    total_reviews: int = Field(0, description="Total number of reviews")
+    
+    @validator('id', pre=True)
+    def convert_uuid_to_string(cls, v):
+        """Convert UUID to string for JSON serialization"""
+        return str(v) if v else None

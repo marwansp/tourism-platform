@@ -1,0 +1,157 @@
+{
+  "meta": {
+    "title": "Morocco Tourism - Discover the Magic of Morocco",
+    "description": "Discover Morocco with our authentic tours. Experience the Sahara Desert, Atlas Mountains, and historic cities. Book your adventure today!"
+  },
+  "navbar": {
+    "home": "Home",
+    "tours": "Tours",
+    "gallery": "Gallery",
+    "booking": "Booking",
+    "contact": "Contact",
+    "language": "Language"
+  },
+  "home": {
+    "hero": {
+      "title": "Discover the Magic of Morocco",
+      "subtitle": "Experience authentic adventures in the Sahara Desert, Atlas Mountains, and historic imperial cities",
+      "cta": "Explore Our Tours"
+    },
+    "featured": {
+      "title": "Featured Tours",
+      "subtitle": "Handpicked experiences that showcase the best of Morocco"
+    },
+    "why": {
+      "title": "Why Choose Us",
+      "authentic": {
+        "title": "Authentic Experiences",
+        "description": "Local guides and genuine cultural immersion"
+      },
+      "comfort": {
+        "title": "Comfortable Travel",
+        "description": "Modern vehicles and quality accommodations"
+      },
+      "support": {
+        "title": "24/7 Support",
+        "description": "Always here to help during your journey"
+      }
+    }
+  },
+  "tours": {
+    "title": "Our Tours",
+    "subtitle": "Choose from our carefully crafted Moroccan adventures",
+    "viewDetails": "View Details",
+    "bookNow": "Book Now",
+    "duration": "Duration",
+    "price": "Price",
+    "perPerson": "per person",
+    "perDay": "per day",
+    "loading": "Loading tours...",
+    "error": "Failed to load tours. Please try again.",
+    "noTours": "No tours available at the moment."
+  },
+  "tourDetails": {
+    "bookTour": "Book This Tour",
+    "duration": "Duration",
+    "price": "Price",
+    "perPerson": "per person",
+    "perDay": "per day",
+    "loading": "Loading tour details...",
+    "error": "Tour not found or failed to load.",
+    "backToTours": "Back to Tours"
+  },
+  "booking": {
+    "title": "Book Your Adventure",
+    "subtitle": "Fill in your details and we'll contact you to confirm your booking",
+    "form": {
+      "name": "Full Name",
+      "namePlaceholder": "Enter your full name",
+      "email": "Email Address",
+      "emailPlaceholder": "Enter your email address",
+      "phone": "Phone Number",
+      "phonePlaceholder": "Enter your phone number (optional)",
+      "tourId": "Select Tour",
+      "tourPlaceholder": "Choose a tour",
+      "participants": "Number of Participants",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "travelDate": "Travel Date",
+      "submit": "Submit Booking",
+      "submitting": "Submitting..."
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "nameMin": "Name must be at least 2 characters",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Please enter a valid email address",
+      "tourRequired": "Please select a tour",
+      "participantsRequired": "Number of participants is required",
+      "participantsMin": "At least 1 participant is required",
+      "participantsMax": "Maximum 50 participants allowed",
+      "startDateRequired": "Start date is required",
+      "endDateRequired": "End date is required",
+      "endDateAfterStart": "End date must be after start date",
+      "dateRequired": "Travel date is required",
+      "dateFuture": "Travel date must be in the future"
+    },
+    "success": "Booking submitted successfully! We'll contact you soon to confirm your adventure.",
+    "error": "Failed to submit booking. Please try again."
+  },
+  "gallery": {
+    "title": "Gallery",
+    "subtitle": "Glimpses of the beautiful destinations you'll explore",
+    "loading": "Loading gallery...",
+    "error": "Failed to load gallery images.",
+    "noImages": "No images available at the moment."
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "Get in touch with us for any questions or special requests",
+    "info": {
+      "title": "Contact Information",
+      "address": "Marrakech, Morocco",
+      "phone": "+212 XXX-XXXXXX",
+      "email": "info@moroccotourism.com",
+      "hours": "Available 24/7"
+    },
+    "form": {
+      "title": "Send us a Message",
+      "name": "Your Name",
+      "namePlaceholder": "Enter your name",
+      "email": "Your Email",
+      "emailPlaceholder": "Enter your email",
+      "subject": "Subject",
+      "subjectPlaceholder": "What's this about?",
+      "message": "Message",
+      "messagePlaceholder": "Tell us how we can help you...",
+      "submit": "Send Message",
+      "submitting": "Sending..."
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Please enter a valid email address",
+      "subjectRequired": "Subject is required",
+      "messageRequired": "Message is required",
+      "messageMin": "Message must be at least 10 characters"
+    },
+    "success": "Message sent successfully! We'll get back to you soon.",
+    "error": "Failed to send message. Please try again."
+  },
+  "footer": {
+    "description": "Discover the magic of Morocco with authentic tours and unforgettable experiences.",
+    "quickLinks": "Quick Links",
+    "contact": "Contact Info",
+    "followUs": "Follow Us",
+    "rights": "All rights reserved."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "tryAgain": "Try Again",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous"
+  }
+}

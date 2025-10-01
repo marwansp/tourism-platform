@@ -1,0 +1,222 @@
+version: '3.8'
+
+services:
+  # Tours & Packages Service
+  tours-service:
+    build: 
+      context: ./tours-service
+      dockerfile: Dockerfile
+    ports:
+      - "8010:8010"
+    environment:
+      - DATABASE_URL=postgresql://tours_user:tours_pass@tours-db:5432/tours_db
+      - PYTHONPATH=/app
+    depends_on:
+      - tours-db
+    volumes:
+      - ./tours-service:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8010 --reload
+    networks:
+      - tourism-network
+
+  # Tours Database
+  tours-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=tours_db
+      - POSTGRES_USER=tours_user
+      - POSTGRES_PASSWORD=tours_pass
+    volumes:
+      - tours_db_data:/var/lib/postgresql/data
+      - ./tours-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - tourism-network
+
+  # Booking & Reservation Service (for future implementation)
+  booking-service:
+    build: 
+      context: ./booking-service
+      dockerfile: Dockerfile
+    ports:
+      - "8020:8020"
+    environment:
+      - DATABASE_URL=postgresql://booking_user:booking_pass@booking-db:5432/booking_db
+      - TOURS_SERVICE_URL=http://tours-service:8010
+      - MESSAGING_SERVICE_URL=http://messaging-service:8030
+      - ADMIN_EMAIL=hamzaraji868@gmail.com
+      - PYTHONPATH=/app
+    depends_on:
+      - booking-db
+      - tours-service
+    volumes:
+      - ./booking-service:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8020 --reload
+    networks:
+      - tourism-network
+    profiles:
+      - full
+
+  # Booking Database
+  booking-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=booking_db
+      - POSTGRES_USER=booking_user
+      - POSTGRES_PASSWORD=booking_pass
+    volumes:
+      - booking_db_data:/var/lib/postgresql/data
+      - ./booking-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"
+    networks:
+      - tourism-network
+    profiles:
+      - full
+
+  # Messaging & Notification Service (for future implementation)
+  messaging-service:
+    build: 
+      context: ./messaging-service
+      dockerfile: Dockerfile
+    ports:
+      - "8030:8030"
+    environment:
+      - DATABASE_URL=postgresql://messaging_user:messaging_pass@messaging-db:5432/messaging_db
+      - SMTP_SERVER=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USERNAME=hamzaraji868@gmail.com
+      - SMTP_PASSWORD=eyqryccneeobYrzf
+      - FROM_EMAIL=hamzaraji868@gmail.com
+      - ADMIN_EMAIL=hamzaraji868@gmail.com
+      - PYTHONPATH=/app
+    depends_on:
+      - messaging-db
+    volumes:
+      - ./messaging-service:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8030 --reload
+    networks:
+      - tourism-network
+    profiles:
+      - full
+
+  # Messaging Database
+  messaging-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=messaging_db
+      - POSTGRES_USER=messaging_user
+      - POSTGRES_PASSWORD=messaging_pass
+    volumes:
+      - messaging_db_data:/var/lib/postgresql/data
+      - ./messaging-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5434:5432"
+    networks:
+      - tourism-network
+    profiles:
+      - full
+
+  # Media & Gallery Service (for future implementation)
+  media-service:
+    build: 
+      context: ./media-service
+      dockerfile: Dockerfile
+    ports:
+      - "8040:8040"
+    environment:
+      - DATABASE_URL=postgresql://media_user:media_pass@media-db:5432/media_db
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - PYTHONPATH=/app
+    depends_on:
+      - media-db
+      - minio
+    volumes:
+      - ./media-service:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8040 --reload
+    networks:
+      - tourism-network
+    profiles:
+      - full
+
+  # Media Database
+  media-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=media_db
+      - POSTGRES_USER=media_user
+      - POSTGRES_PASSWORD=media_pass
+    volumes:
+      - media_db_data:/var/lib/postgresql/data
+      - ./media-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5435:5432"
+    networks:
+      - tourism-network
+    profiles:
+      - full
+
+  # MinIO for Media Storage
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - tourism-network
+    profiles:
+      - full
+
+  # Frontend Service
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - tours-service
+      - booking-service
+      - messaging-service
+      - media-service
+    networks:
+      - tourism-network
+    profiles:
+      - full
+
+  # Frontend Development Service (with hot reload)
+  frontend-dev:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:5173"
+    depends_on:
+      - tours-service
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - tourism-network
+    profiles:
+      - dev
+
+volumes:
+  tours_db_data:
+  booking_db_data:
+  messaging_db_data:
+  media_db_data:
+  minio_data:
+
+networks:
+  tourism-network:
+    driver: bridge

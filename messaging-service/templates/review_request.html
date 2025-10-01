@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How was your tour experience?</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #2c5aa0;
+            margin: 0;
+            font-size: 28px;
+        }
+        .tour-info {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+        }
+        .tour-info h3 {
+            color: #28a745;
+            margin: 0 0 10px 0;
+        }
+        .stars {
+            font-size: 24px;
+            color: #ffc107;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            transition: background-color 0.3s;
+        }
+        .cta-button:hover {
+            background-color: #218838;
+        }
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 14px;
+        }
+        .contact-info {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌟 How was your tour experience?</h1>
+            <p>We'd love to hear about your adventure!</p>
+        </div>
+
+        <div class="tour-info">
+            <h3>📍 {{ tour_title }}</h3>
+            <p><strong>Date:</strong> {{ tour_date }}</p>
+            <p><strong>Customer:</strong> {{ customer_name }}</p>
+        </div>
+
+        <p>Hi {{ customer_name }},</p>
+        
+        <p>Thank you for choosing our tour service! We hope you had an amazing experience on your <strong>{{ tour_title }}</strong> adventure.</p>
+        
+        <p>Your feedback is incredibly valuable to us and helps other travelers discover great experiences. Would you mind taking 2 minutes to share your thoughts?</p>
+
+        <div class="stars">
+            ⭐ ⭐ ⭐ ⭐ ⭐
+        </div>
+
+        <div class="button-container">
+            <a href="{{ review_link }}" class="cta-button">
+                ✍️ Leave Your Review
+            </a>
+        </div>
+
+        <p><strong>What you can share:</strong></p>
+        <ul>
+            <li>⭐ Rate your experience (1-5 stars)</li>
+            <li>📝 Tell others about your favorite moments</li>
+            <li>💡 Share tips for future travelers</li>
+            <li>📸 Your review helps others choose their perfect adventure</li>
+        </ul>
+
+        <div class="contact-info">
+            <p><strong>Need help or have questions?</strong></p>
+            <p>📧 Email: contact@yourtourcompany.com</p>
+            <p>📱 Phone: +212 XXX-XXXXXX</p>
+        </div>
+
+        <div class="footer">
+            <p>Thank you for traveling with us! 🚀</p>
+            <p><em>This review link is unique to your booking and expires in 30 days.</em></p>
+        </div>
+    </div>
+</body>
+</html>

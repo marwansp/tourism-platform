@@ -1,0 +1,146 @@
+{
+  "meta": {
+    "title": "Tourisme Maroc - Découvrez la Magie du Maroc",
+    "description": "Découvrez le Maroc avec nos circuits authentiques. Vivez le désert du Sahara, les montagnes de l'Atlas et les villes historiques. Réservez votre aventure dès aujourd'hui !"
+  },
+  "navbar": {
+    "home": "Accueil",
+    "tours": "Circuits",
+    "gallery": "Galerie",
+    "booking": "Réservation",
+    "contact": "Contact",
+    "language": "Langue"
+  },
+  "home": {
+    "hero": {
+      "title": "Découvrez la Magie du Maroc",
+      "subtitle": "Vivez des aventures authentiques dans le désert du Sahara, les montagnes de l'Atlas et les villes impériales historiques",
+      "cta": "Explorez Nos Circuits"
+    },
+    "featured": {
+      "title": "Circuits Vedettes",
+      "subtitle": "Expériences sélectionnées qui présentent le meilleur du Maroc"
+    },
+    "why": {
+      "title": "Pourquoi Nous Choisir",
+      "authentic": {
+        "title": "Expériences Authentiques",
+        "description": "Guides locaux et immersion culturelle véritable"
+      },
+      "comfort": {
+        "title": "Voyage Confortable",
+        "description": "Véhicules modernes et hébergements de qualité"
+      },
+      "support": {
+        "title": "Support 24/7",
+        "description": "Toujours là pour vous aider pendant votre voyage"
+      }
+    }
+  },
+  "tours": {
+    "title": "Nos Circuits",
+    "subtitle": "Choisissez parmi nos aventures marocaines soigneusement conçues",
+    "viewDetails": "Voir Détails",
+    "bookNow": "Réserver",
+    "duration": "Durée",
+    "price": "Prix",
+    "perPerson": "par personne",
+    "loading": "Chargement des circuits...",
+    "error": "Échec du chargement des circuits. Veuillez réessayer.",
+    "noTours": "Aucun circuit disponible pour le moment."
+  },
+  "tourDetails": {
+    "bookTour": "Réserver ce Circuit",
+    "duration": "Durée",
+    "price": "Prix",
+    "perPerson": "par personne",
+    "loading": "Chargement des détails du circuit...",
+    "error": "Circuit introuvable ou échec du chargement.",
+    "backToTours": "Retour aux Circuits"
+  },
+  "booking": {
+    "title": "Réservez Votre Aventure",
+    "subtitle": "Remplissez vos coordonnées et nous vous contacterons pour confirmer votre réservation",
+    "form": {
+      "name": "Nom Complet",
+      "namePlaceholder": "Entrez votre nom complet",
+      "email": "Adresse Email",
+      "emailPlaceholder": "Entrez votre adresse email",
+      "phone": "Numéro de Téléphone",
+      "phonePlaceholder": "Entrez votre numéro de téléphone (optionnel)",
+      "tourId": "Sélectionner un Circuit",
+      "tourPlaceholder": "Choisissez un circuit",
+      "travelDate": "Date de Voyage",
+      "submit": "Soumettre la Réservation",
+      "submitting": "Envoi en cours..."
+    },
+    "validation": {
+      "nameRequired": "Le nom est requis",
+      "nameMin": "Le nom doit contenir au moins 2 caractères",
+      "emailRequired": "L'email est requis",
+      "emailInvalid": "Veuillez entrer une adresse email valide",
+      "tourRequired": "Veuillez sélectionner un circuit",
+      "dateRequired": "La date de voyage est requise",
+      "dateFuture": "La date de voyage doit être dans le futur"
+    },
+    "success": "Réservation soumise avec succès ! Nous vous contacterons bientôt pour confirmer votre aventure.",
+    "error": "Échec de la soumission de la réservation. Veuillez réessayer."
+  },
+  "gallery": {
+    "title": "Galerie",
+    "subtitle": "Aperçus des belles destinations que vous explorerez",
+    "loading": "Chargement de la galerie...",
+    "error": "Échec du chargement des images de la galerie.",
+    "noImages": "Aucune image disponible pour le moment."
+  },
+  "contact": {
+    "title": "Contactez-Nous",
+    "subtitle": "Contactez-nous pour toute question ou demande spéciale",
+    "info": {
+      "title": "Informations de Contact",
+      "address": "Marrakech, Maroc",
+      "phone": "+212 XXX-XXXXXX",
+      "email": "info@moroccotourism.com",
+      "hours": "Disponible 24/7"
+    },
+    "form": {
+      "title": "Envoyez-nous un Message",
+      "name": "Votre Nom",
+      "namePlaceholder": "Entrez votre nom",
+      "email": "Votre Email",
+      "emailPlaceholder": "Entrez votre email",
+      "subject": "Sujet",
+      "subjectPlaceholder": "De quoi s'agit-il ?",
+      "message": "Message",
+      "messagePlaceholder": "Dites-nous comment nous pouvons vous aider...",
+      "submit": "Envoyer le Message",
+      "submitting": "Envoi en cours..."
+    },
+    "validation": {
+      "nameRequired": "Le nom est requis",
+      "emailRequired": "L'email est requis",
+      "emailInvalid": "Veuillez entrer une adresse email valide",
+      "subjectRequired": "Le sujet est requis",
+      "messageRequired": "Le message est requis",
+      "messageMin": "Le message doit contenir au moins 10 caractères"
+    },
+    "success": "Message envoyé avec succès ! Nous vous répondrons bientôt.",
+    "error": "Échec de l'envoi du message. Veuillez réessayer."
+  },
+  "footer": {
+    "description": "Découvrez la magie du Maroc avec des circuits authentiques et des expériences inoubliables.",
+    "quickLinks": "Liens Rapides",
+    "contact": "Infos Contact",
+    "followUs": "Suivez-Nous",
+    "rights": "Tous droits réservés."
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Quelque chose s'est mal passé",
+    "tryAgain": "Réessayer",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent"
+  }
+}

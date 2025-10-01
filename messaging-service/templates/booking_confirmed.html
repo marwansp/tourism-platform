@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Booking Confirmed - Tourism Platform</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #27ae60; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { padding: 30px; background-color: #f8f9fa; border-radius: 0 0 8px 8px; }
+        .booking-details { background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #27ae60; }
+        .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .detail-label { font-weight: bold; color: #2c3e50; }
+        .detail-value { color: #34495e; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .footer { padding: 20px; text-align: center; color: #666; font-size: 14px; }
+        .next-steps { background-color: #e8f5e8; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 Tourism Platform</h1>
+            <h2>🎉 Booking Confirmed!</h2>
+        </div>
+        <div class="content">
+            <p>Dear {{ customer_name }},</p>
+            
+            <div class="success">
+                <strong>Great News!</strong> Your booking has been confirmed and you're all set for your adventure!
+            </div>
+            
+            <p>We're excited to confirm that your tour booking is now officially confirmed. Get ready for an amazing experience!</p>
+            
+            <div class="booking-details">
+                <h3>✅ Confirmed Booking Details</h3>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Booking ID:</span>
+                    <span class="detail-value">{{ booking_id }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Tour:</span>
+                    <span class="detail-value">{{ tour_title }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Start Date:</span>
+                    <span class="detail-value">{{ start_date }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">End Date:</span>
+                    <span class="detail-value">{{ end_date }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Duration:</span>
+                    <span class="detail-value">{{ duration_days }} day{{ 's' if duration_days > 1 else '' }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Participants:</span>
+                    <span class="detail-value">{{ number_of_participants }} person{{ 's' if number_of_participants > 1 else '' }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Total Amount:</span>
+                    <span class="detail-value" style="font-size: 18px; font-weight: bold; color: #27ae60;">${{ total_price }}</span>
+                </div>
+            </div>
+            
+            <div class="next-steps">
+                <h4>📋 What's Next?</h4>
+                <ul>
+                    <li><strong>Save this confirmation:</strong> Keep this email for your records</li>
+                    <li><strong>Prepare for your tour:</strong> We'll send you detailed instructions 24-48 hours before your tour</li>
+                    <li><strong>Contact information:</strong> Our team will reach out if any additional details are needed</li>
+                    <li><strong>Weather updates:</strong> We'll notify you of any weather-related changes</li>
+                </ul>
+            </div>
+            
+            <p><strong>Important Reminders:</strong></p>
+            <ul>
+                <li>Please arrive 15 minutes before the scheduled start time</li>
+                <li>Bring comfortable walking shoes and weather-appropriate clothing</li>
+                <li>Don't forget your camera to capture the amazing moments!</li>
+                <li>If you have any dietary restrictions or special requirements, please contact us</li>
+            </ul>
+            
+            <p>We can't wait to show you an incredible experience! If you have any questions before your tour, please don't hesitate to reach out to our team.</p>
+            
+            <p>Thank you for choosing Tourism Platform for your adventure!</p>
+            
+            <p>Best regards,<br>
+            The Tourism Platform Team</p>
+        </div>
+        <div class="footer">
+            <p>Questions? Contact us at info@tourismplatform.com or call us at +212 XXX-XXXXXX</p>
+            <p>© 2024 Tourism Platform. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
