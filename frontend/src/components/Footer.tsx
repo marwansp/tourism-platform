@@ -31,7 +31,7 @@ const Footer = () => {
                 alt="Atlas Brothers Tours Logo"
                 className="logo-image h-16 w-auto"
               />
-              <span className="text-xl font-bold">ATLAS BROTHERS TOURS</span>
+              <span className="text-xl font-bold">ATLAS BROTHERS TOURS </span>
             </Link>
             <p className="text-gray-300 leading-relaxed">
               {t('footer.description')}
