@@ -12,12 +12,14 @@ services:
       - DATABASE_URL=postgresql://tours_user:tours_pass@tours-db:5432/tours_db
       - PYTHONPATH=/app
     depends_on:
-      - tours-db
+      tours-db:
+        condition: service_healthy
     volumes:
       - ./tours-service:/app
     command: uvicorn main:app --host 0.0.0.0 --port 8010 --reload
     networks:
       - tourism-network
+
 
   # Tours Database
   tours-db:
@@ -33,6 +35,11 @@ services:
       - "5432:5432"
     networks:
       - tourism-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tours_user -d tours_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # Booking & Reservation Service (for future implementation)
   booking-service:
@@ -48,8 +55,10 @@ services:
       - ADMIN_EMAIL=hamzaraji868@gmail.com
       - PYTHONPATH=/app
     depends_on:
-      - booking-db
-      - tours-service
+      booking-db:
+        condition: service_healthy
+      tours-service:
+        condition: service_started
     volumes:
       - ./booking-service:/app
     command: uvicorn main:app --host 0.0.0.0 --port 8020 --reload
@@ -74,6 +83,11 @@ services:
       - tourism-network
     profiles:
       - full
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U booking_user -d booking_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # Messaging & Notification Service (for future implementation)
   messaging-service:

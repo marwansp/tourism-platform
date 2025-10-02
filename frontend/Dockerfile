@@ -24,9 +24,6 @@ RUN apk add --no-cache curl
 # Copy built app to nginx
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy logo directly to ensure it's available
-COPY --from=build /app/public/morocco-logo.png /usr/share/nginx/html/morocco-logo.png
-
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
