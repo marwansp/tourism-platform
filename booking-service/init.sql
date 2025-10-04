@@ -1,15 +1,20 @@
 -- Initialize Booking Database
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create bookings table
+-- Create bookings table with all required columns (matching the SQLAlchemy model)
 CREATE TABLE IF NOT EXISTS bookings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     customer_name VARCHAR(100) NOT NULL,
     email VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
     tour_id UUID NOT NULL,
-    travel_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled')),
+    start_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    number_of_participants INTEGER NOT NULL DEFAULT 1,
+    price_per_person DECIMAL(10,2) NOT NULL,
+    total_price DECIMAL(10,2) NOT NULL,
+    travel_date TIMESTAMP WITH TIME ZONE,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
     admin_viewed BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -39,10 +44,22 @@ CREATE TRIGGER update_bookings_updated_at
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
--- Insert sample booking data (using tour IDs from tours service)
--- Note: These tour IDs should match the ones from tours service init.sql
-INSERT INTO bookings (customer_name, email, phone, tour_id, travel_date, status) VALUES
-('John Smith', 'john.smith@example.com', '+1-555-0123', (SELECT id FROM (VALUES ('731e6fc9-f4e3-4589-8c54-0045d9fced1f'::uuid)) AS t(id) LIMIT 1), '2024-12-15 09:00:00+00', 'confirmed'),
-('Maria Garcia', 'maria.garcia@example.com', '+34-600-123456', (SELECT id FROM (VALUES ('8b2c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e'::uuid)) AS t(id) LIMIT 1), '2024-11-20 08:00:00+00', 'pending'),
-('Ahmed Hassan', 'ahmed.hassan@example.com', '+212-600-789012', (SELECT id FROM (VALUES ('9c3d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f'::uuid)) AS t(id) LIMIT 1), '2024-10-25 10:00:00+00', 'confirmed')
+-- Insert sample booking data with all required fields
+INSERT INTO bookings (
+    customer_name, email, phone, tour_id, 
+    start_date, end_date, number_of_participants, 
+    price_per_person, total_price, travel_date, status
+) VALUES
+('John Smith', 'john.smith@example.com', '+1-555-0123', 
+ 'fa9aa31a-f979-4d21-ad3e-0436281cd5d2'::uuid,
+ '2024-12-15 09:00:00+00', '2024-12-15 18:00:00+00', 2, 
+ 45.00, 90.00, '2024-12-15 09:00:00+00', 'confirmed'),
+('Maria Garcia', 'maria.garcia@example.com', '+34-600-123456', 
+ '563177db-9a0c-4e5d-b180-58edd0a5d277'::uuid,
+ '2024-11-20 08:00:00+00', '2024-11-22 18:00:00+00', 1, 
+ 180.00, 180.00, '2024-11-20 08:00:00+00', 'pending'),
+('Ahmed Hassan', 'ahmed.hassan@example.com', '+212-600-789012', 
+ '6f5b7f7d-cf58-4395-a349-3247cbb4e0dc'::uuid,
+ '2024-10-25 10:00:00+00', '2024-10-25 17:00:00+00', 3, 
+ 65.00, 195.00, '2024-10-25 10:00:00+00', 'confirmed')
 ON CONFLICT DO NOTHING;

@@ -32,7 +32,7 @@ const ReviewPage: React.FC = () => {
 
   const fetchReviewForm = async () => {
     try {
-      const response = await fetch(`http://localhost:8010/reviews/form/${token}`);
+      const response = await fetch(`/api/tours/reviews/form/${token}`);
       if (response.ok) {
         const data = await response.json();
         setFormData(data);
@@ -63,7 +63,7 @@ const ReviewPage: React.FC = () => {
     setError('');
 
     try {
-      const response = await fetch(`http://localhost:8010/reviews/submit/${token}`, {
+      const response = await fetch(`/api/tours/reviews/submit/${token}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

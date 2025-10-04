@@ -33,6 +33,15 @@ CREATE TRIGGER update_tours_updated_at
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
+-- Add missing columns for production compatibility
+ALTER TABLE tours 
+ADD COLUMN IF NOT EXISTS base_price DECIMAL(10,2),
+ADD COLUMN IF NOT EXISTS duration_days INTEGER DEFAULT 1,
+ADD COLUMN IF NOT EXISTS duration_description VARCHAR(50),
+ADD COLUMN IF NOT EXISTS min_participants INTEGER DEFAULT 1,
+ADD COLUMN IF NOT EXISTS group_discount_threshold INTEGER DEFAULT 5,
+ADD COLUMN IF NOT EXISTS group_discount_percentage DECIMAL(5,2) DEFAULT 0.00;
+
 -- Insert sample data with beautiful Moroccan tourism images and complete details
 INSERT INTO tours (title, description, price, duration, location, max_participants, difficulty_level, includes, available_dates, image_url) VALUES
 ('Marrakech City Tour', 'Explore the vibrant souks, historic palaces, and bustling Jemaa el-Fnaa square in Morocco''s red city. Visit the Bahia Palace, Saadian Tombs, and experience traditional Moroccan culture.', 45.00, '1 day', 'Marrakech', 15, 'Easy', '["Professional guide", "Transportation", "Entrance fees", "Traditional lunch"]', '["2024-12-01", "2024-12-05", "2024-12-10", "2024-12-15", "2024-12-20"]', 'https://images.unsplash.com/photo-1539650116574-75c0c6d73f6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'),
@@ -42,3 +51,13 @@ INSERT INTO tours (title, description, price, duration, location, max_participan
 ('Fes Cultural Journey', 'Discover the ancient medina, traditional crafts, and rich history of Morocco''s spiritual capital. Visit the world''s oldest university and explore medieval streets.', 55.00, '1 day', 'Fes', 15, 'Easy', '["Expert guide", "Medina tour", "Craft workshops", "Traditional lunch", "Transportation"]', '["2024-12-04", "2024-12-11", "2024-12-18", "2024-12-25"]', 'https://images.unsplash.com/photo-1544967919-6e4b999de2a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'),
 ('Chefchaouen Blue City', 'Wander through the enchanting blue-painted streets of Morocco''s most photogenic town. Discover local crafts, mountain views, and peaceful atmosphere.', 75.00, '1 day', 'Chefchaouen', 12, 'Easy', '["Transportation", "Local guide", "Photography spots", "Traditional lunch", "Free exploration time"]', '["2024-12-08", "2024-12-15", "2024-12-22", "2024-12-29"]', 'https://images.unsplash.com/photo-1570939274717-7eda259b50ed?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80')
 ON CONFLICT DO NOTHING;
+
+-- Update new columns with data from existing columns
+UPDATE tours SET 
+  base_price = COALESCE(price, 0),
+  duration_description = COALESCE(duration, '1 day'),
+  duration_days = 1,
+  min_participants = 1,
+  group_discount_threshold = 5,
+  group_discount_percentage = 0.00
+WHERE base_price IS NULL;

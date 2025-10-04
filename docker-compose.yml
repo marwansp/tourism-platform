@@ -98,12 +98,12 @@ services:
       - "8030:8030"
     environment:
       - DATABASE_URL=postgresql://messaging_user:messaging_pass@messaging-db:5432/messaging_db
-      - SMTP_SERVER=smtp.gmail.com
-      - SMTP_PORT=587
-      - SMTP_USERNAME=hamzaraji868@gmail.com
-      - SMTP_PASSWORD=eyqryccneeobYrzf
-      - FROM_EMAIL=hamzaraji868@gmail.com
-      - ADMIN_EMAIL=hamzaraji868@gmail.com
+      - SMTP_SERVER=${SMTP_SERVER:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME:-hamzaraji868@gmail.com}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-eyqryccneeobYrzf}
+      - FROM_EMAIL=${FROM_EMAIL:-hamzaraji868@gmail.com}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-hamzaraji868@gmail.com}
       - PYTHONPATH=/app
     depends_on:
       - messaging-db

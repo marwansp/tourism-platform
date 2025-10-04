@@ -24,6 +24,9 @@ RUN apk add --no-cache curl
 # Copy built app to nginx
 COPY --from=build /app/dist /usr/share/nginx/html
 
+# Copy logo explicitly (Vite should handle this, but ensure it's there)
+COPY --from=build /app/public/morocco-logo.png /usr/share/nginx/html/morocco-logo.png
+
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 

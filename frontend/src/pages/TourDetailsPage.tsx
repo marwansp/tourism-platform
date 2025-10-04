@@ -41,14 +41,14 @@ const TourDetailsPage = () => {
                 setTour(tourData)
                 
                 // Fetch reviews
-                const reviewsResponse = await fetch(`http://localhost:8010/tours/${id}/reviews`)
+                const reviewsResponse = await fetch(`/api/tours/tours/${id}/reviews`)
                 if (reviewsResponse.ok) {
                     const reviewsData = await reviewsResponse.json()
                     setReviews(reviewsData)
                 }
                 
                 // Fetch rating stats
-                const statsResponse = await fetch(`http://localhost:8010/tours/${id}/rating-stats`)
+                const statsResponse = await fetch(`/api/tours/tours/${id}/rating-stats`)
                 if (statsResponse.ok) {
                     const statsData = await statsResponse.json()
                     setAverageRating(statsData.average_rating)
