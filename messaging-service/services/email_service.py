@@ -1,6 +1,5 @@
-import aiosmtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import sendgrid
+from sendgrid.helpers.mail import Mail, Email, To, Content
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 import os
 from typing import Dict, Any, Optional
@@ -14,12 +13,15 @@ class EmailService:
     """
     
     def __init__(self):
-        self.smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-        self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
-        self.smtp_username = os.getenv("SMTP_USERNAME", "")
-        self.smtp_password = os.getenv("SMTP_PASSWORD", "")
-        self.from_email = os.getenv("FROM_EMAIL", self.smtp_username)
-        self.admin_email = os.getenv("ADMIN_EMAIL", "admin@tourismplatform.com")
+        self.sendgrid_api_key = os.getenv("SENDGRID_API_KEY", "")
+        self.from_email = os.getenv("FROM_EMAIL", "noreply@atlasbrotherstours.com")
+        self.admin_email = os.getenv("ADMIN_EMAIL", "admin@atlasbrotherstours.com")
+        
+        # Initialize SendGrid client
+        if self.sendgrid_api_key:
+            self.sg = sendgrid.SendGridAPIClient(api_key=self.sendgrid_api_key)
+        else:
+            self.sg = None
         
         # Initialize Jinja2 template environment
         template_dir = os.path.join(os.path.dirname(__file__), "..", "templates")
@@ -34,7 +36,7 @@ class EmailService:
     
     async def send_email(self, to: str, subject: str, template: str = "default", data: Optional[Dict[str, Any]] = None) -> bool:
         """
-        Send email using specified template
+        Send email using specified template via SendGrid
         
         Args:
             to: Recipient email address
@@ -46,36 +48,38 @@ class EmailService:
             True if email sent successfully, False otherwise
         """
         try:
-            # Skip sending if SMTP credentials are not configured
-            if not self.smtp_username or not self.smtp_password:
-                logger.warning("SMTP credentials not configured, skipping email send")
+            # Skip sending if SendGrid API key is not configured
+            if not self.sendgrid_api_key or not self.sg:
+                logger.warning("SendGrid API key not configured, skipping email send")
                 return True  # Return True for testing purposes
             
             # Generate email content from template
             html_content, text_content = self._render_template(template, data or {})
             
-            # Create message
-            message = MIMEMultipart("alternative")
-            message["Subject"] = subject
-            message["From"] = self.from_email
-            message["To"] = to
+            # Create SendGrid mail object
+            from_email = Email(self.from_email)
+            to_email = To(to)
             
-            # Add text and HTML parts
-            text_part = MIMEText(text_content, "plain")
-            html_part = MIMEText(html_content, "html")
-            
-            message.attach(text_part)
-            message.attach(html_part)
-            
-            # Send email
-            await aiosmtplib.send(
-                message,
-                hostname=self.smtp_server,
-                port=self.smtp_port,
-                start_tls=True,
-                username=self.smtp_username,
-                password=self.smtp_password,
+            # Create mail with HTML content
+            mail = Mail(
+                from_email=from_email,
+                to_emails=to_email,
+                subject=subject,
+                html_content=Content("text/html", html_content)
             )
+            
+            # Add plain text content as well
+            mail.add_content(Content("text/plain", text_content))
+            
+            # Send email via SendGrid
+            response = self.sg.client.mail.send.post(request_body=mail.get())
+            
+            if response.status_code in [200, 202]:
+                logger.info(f"Email sent successfully to {to} via SendGrid")
+                return True
+            else:
+                logger.error(f"SendGrid API error: {response.status_code} - {response.body}")
+                return False
             
             logger.info(f"Email sent successfully to {to}")
             return True
