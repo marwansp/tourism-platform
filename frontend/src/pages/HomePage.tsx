@@ -56,7 +56,7 @@ const HomePage = () => {
         {/* Background Image */}
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
+            src="https://i.ibb.co/RtCQ9F7/istockphoto-469810976-612x612.jpg"
             alt="Morocco Desert Landscape"
             className="w-full h-full object-cover"
           />

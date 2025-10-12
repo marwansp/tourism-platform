@@ -149,7 +149,7 @@ const TourDetailsPage = () => {
             <div className="min-h-screen bg-gray-50">
                 {/* Back Button */}
                 <div className="bg-white border-b">
-                    <div className="container-custom py-4">
+                    <div className="container-custom py-4 px-4 sm:px-6 lg:px-8">
                         <Link
                             to="/tours"
                             className="inline-flex items-center space-x-2 text-moroccan-terracotta hover:text-moroccan-orange transition-colors duration-200"
@@ -161,7 +161,7 @@ const TourDetailsPage = () => {
                 </div>
 
                 {/* Tour Details */}
-                <div className="container-custom py-8">
+                <div className="container-custom py-8 px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Image Gallery */}
                         <div className="space-y-4">
