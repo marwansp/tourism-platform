@@ -9,7 +9,13 @@ import logging
 
 from database import get_db, engine
 from models import Base
-from schemas import TourResponse, TourDetailResponse, TourCreate, TourUpdate, TourReviewCreate, TourReviewResponse
+from schemas import (
+    TourResponse, TourDetailResponse, TourCreate, TourUpdate, 
+    TourReviewCreate, TourReviewResponse,
+    TourGroupPricingCreate, TourGroupPricingUpdate, TourGroupPricingResponse,
+    TagCreate, TagUpdate, TagResponse,
+    TourTagCreate, TourTagResponse
+)
 from crud import (
     get_tours,
     get_tour_by_id,
@@ -20,7 +26,23 @@ from crud import (
     get_review_by_token,
     get_tour_reviews,
     get_tour_rating_stats,
-    create_review_token
+    create_review_token,
+    # Group pricing
+    create_group_pricing,
+    get_tour_group_pricing,
+    update_group_pricing,
+    delete_group_pricing,
+    calculate_group_price,
+    # Tags
+    create_tag,
+    get_all_tags,
+    get_tag_by_id,
+    update_tag,
+    delete_tag,
+    # Tour-Tag associations
+    add_tag_to_tour,
+    get_tour_tags,
+    remove_tag_from_tour
 )
 
 # Configure logging
@@ -298,6 +320,177 @@ async def create_review_token_endpoint(
     except Exception as e:
         logger.error(f"Error creating review token: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to create review token")
+
+
+# ============================================================================
+# Group Pricing Endpoints (v2)
+# ============================================================================
+
+@app.post("/tours/{tour_id}/group-pricing", response_model=TourGroupPricingResponse)
+async def create_tour_group_pricing(
+    tour_id: str,
+    pricing: TourGroupPricingCreate,
+    db: Session = Depends(get_db)
+):
+    """Create a group pricing tier for a tour"""
+    try:
+        db_pricing = create_group_pricing(db, tour_id, pricing)
+        if not db_pricing:
+            raise HTTPException(status_code=404, detail="Tour not found")
+        return db_pricing
+    except SQLAlchemyError as e:
+        logger.error(f"Error creating group pricing: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create group pricing")
+
+
+@app.get("/tours/{tour_id}/group-pricing", response_model=List[TourGroupPricingResponse])
+async def get_tour_group_pricing_endpoint(tour_id: str, db: Session = Depends(get_db)):
+    """Get all group pricing tiers for a tour"""
+    pricing = get_tour_group_pricing(db, tour_id)
+    return pricing
+
+
+@app.put("/group-pricing/{pricing_id}", response_model=TourGroupPricingResponse)
+async def update_tour_group_pricing(
+    pricing_id: str,
+    pricing: TourGroupPricingUpdate,
+    db: Session = Depends(get_db)
+):
+    """Update a group pricing tier"""
+    try:
+        db_pricing = update_group_pricing(db, pricing_id, pricing)
+        if not db_pricing:
+            raise HTTPException(status_code=404, detail="Group pricing not found")
+        return db_pricing
+    except SQLAlchemyError as e:
+        logger.error(f"Error updating group pricing: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update group pricing")
+
+
+@app.delete("/group-pricing/{pricing_id}")
+async def delete_tour_group_pricing(pricing_id: str, db: Session = Depends(get_db)):
+    """Delete a group pricing tier"""
+    try:
+        success = delete_group_pricing(db, pricing_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Group pricing not found")
+        return {"message": "Group pricing deleted successfully"}
+    except SQLAlchemyError as e:
+        logger.error(f"Error deleting group pricing: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to delete group pricing")
+
+
+@app.get("/tours/{tour_id}/calculate-price")
+async def calculate_tour_price(
+    tour_id: str,
+    participants: int,
+    db: Session = Depends(get_db)
+):
+    """Calculate total price based on group size"""
+    result = calculate_group_price(db, tour_id, participants)
+    if 'error' in result:
+        raise HTTPException(status_code=404, detail=result['error'])
+    return result
+
+
+# ============================================================================
+# Tag Endpoints (v2)
+# ============================================================================
+
+@app.post("/tags", response_model=TagResponse)
+async def create_new_tag(tag: TagCreate, db: Session = Depends(get_db)):
+    """Create a new tag"""
+    try:
+        return create_tag(db, tag)
+    except SQLAlchemyError as e:
+        logger.error(f"Error creating tag: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create tag")
+
+
+@app.get("/tags", response_model=List[TagResponse])
+async def list_all_tags(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """Get all available tags"""
+    return get_all_tags(db, skip=skip, limit=limit)
+
+
+@app.get("/tags/{tag_id}", response_model=TagResponse)
+async def get_tag(tag_id: str, db: Session = Depends(get_db)):
+    """Get a specific tag"""
+    tag = get_tag_by_id(db, tag_id)
+    if not tag:
+        raise HTTPException(status_code=404, detail="Tag not found")
+    return tag
+
+
+@app.put("/tags/{tag_id}", response_model=TagResponse)
+async def update_existing_tag(tag_id: str, tag: TagUpdate, db: Session = Depends(get_db)):
+    """Update a tag"""
+    try:
+        db_tag = update_tag(db, tag_id, tag)
+        if not db_tag:
+            raise HTTPException(status_code=404, detail="Tag not found")
+        return db_tag
+    except SQLAlchemyError as e:
+        logger.error(f"Error updating tag: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update tag")
+
+
+@app.delete("/tags/{tag_id}")
+async def delete_existing_tag(tag_id: str, db: Session = Depends(get_db)):
+    """Delete a tag"""
+    try:
+        success = delete_tag(db, tag_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Tag not found")
+        return {"message": "Tag deleted successfully"}
+    except SQLAlchemyError as e:
+        logger.error(f"Error deleting tag: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to delete tag")
+
+
+# ============================================================================
+# Tour-Tag Association Endpoints (v2)
+# ============================================================================
+
+@app.post("/tours/{tour_id}/tags", response_model=TourTagResponse)
+async def add_tag_to_tour_endpoint(
+    tour_id: str,
+    tag_data: TourTagCreate,
+    db: Session = Depends(get_db)
+):
+    """Add a tag to a tour"""
+    try:
+        tour_tag = add_tag_to_tour(db, tour_id, tag_data.tag_id)
+        if not tour_tag:
+            raise HTTPException(status_code=404, detail="Tour or tag not found")
+        return tour_tag
+    except SQLAlchemyError as e:
+        logger.error(f"Error adding tag to tour: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to add tag to tour")
+
+
+@app.get("/tours/{tour_id}/tags", response_model=List[TourTagResponse])
+async def get_tour_tags_endpoint(tour_id: str, db: Session = Depends(get_db)):
+    """Get all tags for a tour"""
+    return get_tour_tags(db, tour_id)
+
+
+@app.delete("/tours/{tour_id}/tags/{tag_id}")
+async def remove_tag_from_tour_endpoint(
+    tour_id: str,
+    tag_id: str,
+    db: Session = Depends(get_db)
+):
+    """Remove a tag from a tour"""
+    try:
+        success = remove_tag_from_tour(db, tour_id, tag_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Tour-tag association not found")
+        return {"message": "Tag removed from tour successfully"}
+    except SQLAlchemyError as e:
+        logger.error(f"Error removing tag from tour: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to remove tag from tour")
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8010)

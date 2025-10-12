@@ -8,6 +8,7 @@ export interface BookingRequest {
   start_date: string
   end_date: string
   number_of_participants: number
+  special_requests?: string
   // Legacy field for backward compatibility
   travel_date?: string
 }

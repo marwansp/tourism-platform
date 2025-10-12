@@ -49,6 +49,8 @@ class Tour(Base):
     seasonal_prices = relationship("TourSeasonalPrice", back_populates="tour", cascade="all, delete-orphan")
     availability = relationship("TourAvailability", back_populates="tour", cascade="all, delete-orphan")
     reviews = relationship("TourReview", back_populates="tour", cascade="all, delete-orphan", order_by="TourReview.created_at.desc()")
+    group_pricing = relationship("TourGroupPricing", back_populates="tour", cascade="all, delete-orphan", order_by="TourGroupPricing.min_participants")
+    tour_tags = relationship("TourTag", back_populates="tour", cascade="all, delete-orphan")
 
     # Legacy field for backward compatibility
     price = Column(DECIMAL(10, 2), nullable=True)
@@ -218,3 +220,102 @@ class TourReview(Base):
 
     def __repr__(self):
         return f"<TourReview(id={self.id}, tour_id={self.tour_id}, rating={self.rating})>"
+
+
+class TourGroupPricing(Base):
+    """
+    SQLAlchemy model for group-based pricing tiers
+    """
+    __tablename__ = "tour_group_pricing"
+
+    id = Column(
+        UUID(as_uuid=True), 
+        primary_key=True, 
+        default=uuid.uuid4,
+        index=True
+    )
+    tour_id = Column(
+        UUID(as_uuid=True), 
+        ForeignKey("tours.id", ondelete="CASCADE"), 
+        nullable=False,
+        index=True
+    )
+    min_participants = Column(Integer, nullable=False)
+    max_participants = Column(Integer, nullable=False)
+    price_per_person = Column(DECIMAL(10, 2), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), 
+        server_default=func.now(),
+        nullable=False
+    )
+
+    # Relationship to tour
+    tour = relationship("Tour", back_populates="group_pricing")
+
+    def __repr__(self):
+        return f"<TourGroupPricing(tour_id={self.tour_id}, {self.min_participants}-{self.max_participants} pax: €{self.price_per_person})>"
+
+
+class Tag(Base):
+    """
+    SQLAlchemy model for tour feature tags
+    """
+    __tablename__ = "tags"
+
+    id = Column(
+        UUID(as_uuid=True), 
+        primary_key=True, 
+        default=uuid.uuid4,
+        index=True
+    )
+    name = Column(String(100), nullable=False, unique=True, index=True)
+    icon = Column(String(50), nullable=True)  # Optional emoji or icon class
+    created_at = Column(
+        DateTime(timezone=True), 
+        server_default=func.now(),
+        nullable=False
+    )
+
+    # Relationship to tours through TourTag
+    tours = relationship("TourTag", back_populates="tag", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<Tag(id={self.id}, name='{self.name}')>"
+
+
+class TourTag(Base):
+    """
+    SQLAlchemy model for many-to-many relationship between tours and tags
+    """
+    __tablename__ = "tour_tags"
+
+    id = Column(
+        UUID(as_uuid=True), 
+        primary_key=True, 
+        default=uuid.uuid4,
+        index=True
+    )
+    tour_id = Column(
+        UUID(as_uuid=True), 
+        ForeignKey("tours.id", ondelete="CASCADE"), 
+        nullable=False,
+        index=True
+    )
+    tag_id = Column(
+        UUID(as_uuid=True), 
+        ForeignKey("tags.id", ondelete="CASCADE"), 
+        nullable=False,
+        index=True
+    )
+    created_at = Column(
+        DateTime(timezone=True), 
+        server_default=func.now(),
+        nullable=False
+    )
+
+    # Relationships
+    tour = relationship("Tour", back_populates="tour_tags")
+    tag = relationship("Tag", back_populates="tours")
+
+    def __repr__(self):
+        return f"<TourTag(tour_id={self.tour_id}, tag_id={self.tag_id})>"

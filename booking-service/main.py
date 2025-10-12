@@ -10,6 +10,7 @@ import logging
 from database import get_db, engine
 from models import Base
 from schemas import BookingResponse, BookingRequest, BookingUpdate, PriceCalculationRequest
+from schemas_v2 import BookingRequestV2, PriceCalculationRequestV2
 from crud import (
     get_bookings,
     get_booking_by_id,
@@ -324,6 +325,130 @@ async def complete_booking(booking_id: str, db: Session = Depends(get_db)):
             status_code=500,
             detail="Failed to complete booking. Please try again."
         )
+
+# ============================================================================
+# V2 Booking Endpoints (Single Date + Group Pricing)
+# ============================================================================
+
+@app.post("/v2/bookings/calculate-price")
+async def calculate_booking_price_v2(request: PriceCalculationRequestV2, db: Session = Depends(get_db)):
+    """Calculate price for a booking with automatic end date and group pricing"""
+    from services.pricing_service import pricing_service
+    from datetime import timedelta
+    
+    try:
+        # Get tour to determine duration
+        tour = await tours_client.get_tour(request.tour_id)
+        if not tour:
+            raise HTTPException(status_code=404, detail="Tour not found")
+        
+        # Calculate end date based on tour duration
+        duration_days = tour.get('duration_days', 1)
+        end_date = request.start_date + timedelta(days=duration_days)
+        
+        # Get group pricing from tours service
+        try:
+            group_price = await tours_client.calculate_group_price(
+                request.tour_id,
+                request.number_of_participants
+            )
+            base_price = group_price.get('price_per_person', tour.get('price', 0))
+        except Exception as e:
+            logger.warning(f"Failed to get group pricing, using base price: {str(e)}")
+            base_price = tour.get('price', 0)
+        
+        # Get seasonal pricing
+        try:
+            seasonal_pricing = await tours_client.get_seasonal_pricing(
+                request.tour_id,
+                request.start_date.isoformat(),
+                end_date.isoformat()
+            )
+            multiplier = seasonal_pricing.get('multiplier', 1.0)
+        except Exception as e:
+            logger.warning(f"Failed to get seasonal pricing, using 1.0: {str(e)}")
+            multiplier = 1.0
+        
+        # Calculate final price
+        price_per_person = float(base_price) * multiplier
+        total_price = price_per_person * request.number_of_participants
+        
+        return {
+            "tour_id": request.tour_id,
+            "start_date": request.start_date.isoformat(),
+            "end_date": end_date.isoformat(),
+            "duration_days": duration_days,
+            "number_of_participants": request.number_of_participants,
+            "base_price_per_person": float(base_price),
+            "seasonal_multiplier": multiplier,
+            "final_price_per_person": price_per_person,
+            "total_price": total_price,
+            "currency": "MAD"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error calculating price v2: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to calculate price. Please try again."
+        )
+
+
+@app.post("/v2/bookings", response_model=BookingResponse)
+async def create_booking_v2(booking: BookingRequestV2, db: Session = Depends(get_db)):
+    """Create a new booking with automatic end date calculation and group pricing"""
+    try:
+        # Get tour to determine duration
+        tour = await tours_client.get_tour(booking.tour_id)
+        if not tour:
+            raise HTTPException(status_code=404, detail="Tour not found")
+        
+        # Calculate end date based on tour duration
+        from datetime import timedelta
+        duration_days = tour.get('duration_days', 1)
+        end_date = booking.start_date + timedelta(days=duration_days)
+        
+        # Calculate price with group pricing
+        price_calc = PriceCalculationRequestV2(
+            tour_id=booking.tour_id,
+            start_date=booking.start_date,
+            number_of_participants=booking.number_of_participants
+        )
+        price_info = await calculate_booking_price_v2(price_calc, db)
+        
+        # Convert v2 booking to v1 format for storage
+        booking_v1 = BookingRequest(
+            tour_id=booking.tour_id,
+            customer_name=booking.customer_name,
+            email=booking.email,
+            phone=booking.phone,
+            start_date=booking.start_date,
+            end_date=end_date,
+            number_of_participants=booking.number_of_participants,
+            special_requests=booking.special_requests,
+            total_price=price_info['total_price']
+        )
+        
+        # Create booking
+        db_booking = await create_booking_with_pricing(db=db, booking=booking_v1)
+        
+        # Send notification
+        try:
+            await messaging_client.send_booking_notification(db_booking, tour)
+        except Exception as e:
+            logger.warning(f"Failed to send notification for booking {db_booking.id}: {str(e)}")
+        
+        return db_booking
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating booking v2: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to create booking. Please try again."
+        )
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8020)

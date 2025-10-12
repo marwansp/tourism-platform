@@ -137,3 +137,101 @@ class TourDetailResponse(TourResponse):
     def convert_uuid_to_string(cls, v):
         """Convert UUID to string for JSON serialization"""
         return str(v) if v else None
+
+# ============================================================================
+# Group Pricing Schemas (v2)
+# ============================================================================
+
+class TourGroupPricingBase(BaseModel):
+    """Base schema for group pricing"""
+    min_participants: int = Field(..., gt=0, description="Minimum number of participants")
+    max_participants: int = Field(..., gt=0, description="Maximum number of participants")
+    price_per_person: Decimal = Field(..., gt=0, description="Price per person for this group size")
+
+    @validator('max_participants')
+    def validate_max_greater_than_min(cls, v, values):
+        """Ensure max_participants >= min_participants"""
+        if 'min_participants' in values and v < values['min_participants']:
+            raise ValueError('max_participants must be greater than or equal to min_participants')
+        return v
+
+class TourGroupPricingCreate(TourGroupPricingBase):
+    """Schema for creating group pricing"""
+    pass
+
+class TourGroupPricingUpdate(BaseModel):
+    """Schema for updating group pricing"""
+    min_participants: Optional[int] = Field(None, gt=0)
+    max_participants: Optional[int] = Field(None, gt=0)
+    price_per_person: Optional[Decimal] = Field(None, gt=0)
+
+class TourGroupPricingResponse(TourGroupPricingBase):
+    """Schema for group pricing response"""
+    id: str
+    tour_id: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+    
+    @validator('id', 'tour_id', pre=True)
+    def convert_uuid_to_string(cls, v):
+        """Convert UUID to string for JSON serialization"""
+        return str(v) if v else None
+
+
+# ============================================================================
+# Tag Schemas (v2)
+# ============================================================================
+
+class TagBase(BaseModel):
+    """Base schema for tags"""
+    name: str = Field(..., min_length=1, max_length=100, description="Tag name")
+    icon: Optional[str] = Field(None, max_length=50, description="Icon emoji or class")
+
+class TagCreate(TagBase):
+    """Schema for creating a tag"""
+    pass
+
+class TagUpdate(BaseModel):
+    """Schema for updating a tag"""
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    icon: Optional[str] = Field(None, max_length=50)
+
+class TagResponse(TagBase):
+    """Schema for tag response"""
+    id: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+    
+    @validator('id', pre=True)
+    def convert_uuid_to_string(cls, v):
+        """Convert UUID to string for JSON serialization"""
+        return str(v) if v else None
+
+
+# ============================================================================
+# Tour Tag Association Schemas (v2)
+# ============================================================================
+
+class TourTagCreate(BaseModel):
+    """Schema for adding a tag to a tour"""
+    tag_id: str = Field(..., description="Tag ID to associate with tour")
+
+class TourTagResponse(BaseModel):
+    """Schema for tour-tag association response"""
+    id: str
+    tour_id: str
+    tag_id: str
+    tag: TagResponse  # Include full tag details
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+    
+    @validator('id', 'tour_id', 'tag_id', pre=True)
+    def convert_uuid_to_string(cls, v):
+        """Convert UUID to string for JSON serialization"""
+        return str(v) if v else None

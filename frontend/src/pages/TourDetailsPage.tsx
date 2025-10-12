@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Helmet } from 'react-helmet-async'
-import { ArrowLeft, Clock, DollarSign, ChevronLeft, ChevronRight, Star } from 'lucide-react'
-import { Tour, toursService } from '../api/tours'
+import { ArrowLeft, Clock, DollarSign, ChevronLeft, ChevronRight, Star, Users, Tag } from 'lucide-react'
+import { Tour, toursService, GroupPricing, TourTag } from '../api/tours'
 
 interface Review {
     id: string;
@@ -25,6 +25,9 @@ const TourDetailsPage = () => {
     const [reviews, setReviews] = useState<Review[]>([])
     const [averageRating, setAverageRating] = useState<number>(0)
     const [totalReviews, setTotalReviews] = useState<number>(0)
+    const [groupPricing, setGroupPricing] = useState<GroupPricing[]>([])
+    const [tourTags, setTourTags] = useState<TourTag[]>([])
+    const [selectedParticipants, setSelectedParticipants] = useState(1)
 
     useEffect(() => {
         const fetchTour = async () => {
@@ -39,6 +42,22 @@ const TourDetailsPage = () => {
                 setError(null)
                 const tourData = await toursService.getTourById(id)
                 setTour(tourData)
+                
+                // Fetch group pricing
+                try {
+                    const pricing = await toursService.getGroupPricing(id)
+                    setGroupPricing(pricing)
+                } catch (err) {
+                    console.log('No group pricing available')
+                }
+                
+                // Fetch tour tags
+                try {
+                    const tags = await toursService.getTourTags(id)
+                    setTourTags(tags)
+                } catch (err) {
+                    console.log('No tags available')
+                }
                 
                 // Fetch reviews
                 const reviewsResponse = await fetch(`/api/tours/tours/${id}/reviews`)
@@ -224,10 +243,31 @@ const TourDetailsPage = () => {
                                     </div>
                                     <div className="flex items-center space-x-2 text-moroccan-terracotta">
                                         <DollarSign size={20} />
-                                        <span className="font-semibold text-xl">${tour.price} {t('tourDetails.perDay')}</span>
+                                        <span className="font-semibold text-xl">From ${tour.price}/person</span>
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Tags */}
+                            {tourTags.length > 0 && (
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                        <Tag size={20} className="text-moroccan-terracotta" />
+                                        What's Included
+                                    </h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {tourTags.map((tourTag) => (
+                                            <span
+                                                key={tourTag.id}
+                                                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-moroccan-sand text-gray-700 border border-moroccan-terracotta/20"
+                                            >
+                                                {tourTag.tag.icon && <span className="mr-1">{tourTag.tag.icon}</span>}
+                                                {tourTag.tag.name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Description */}
                             <div>
@@ -236,6 +276,35 @@ const TourDetailsPage = () => {
                                     {tour.description}
                                 </p>
                             </div>
+
+                            {/* Group Pricing */}
+                            {groupPricing.length > 0 && (
+                                <div className="bg-gradient-to-br from-moroccan-sand to-white p-6 rounded-xl border border-moroccan-terracotta/20">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                        <Users size={20} className="text-moroccan-terracotta" />
+                                        Group Pricing
+                                    </h3>
+                                    <p className="text-sm text-gray-600 mb-4">Better prices for larger groups!</p>
+                                    <div className="space-y-2">
+                                        {groupPricing.map((pricing) => (
+                                            <div
+                                                key={pricing.id}
+                                                className="flex justify-between items-center p-3 bg-white rounded-lg border border-gray-200 hover:border-moroccan-terracotta transition-colors"
+                                            >
+                                                <span className="text-gray-700 font-medium">
+                                                    {pricing.min_participants === pricing.max_participants
+                                                        ? `${pricing.min_participants} person${pricing.min_participants > 1 ? 's' : ''}`
+                                                        : `${pricing.min_participants}-${pricing.max_participants} people`
+                                                    }
+                                                </span>
+                                                <span className="text-moroccan-terracotta font-bold">
+                                                    {pricing.price_per_person} MAD/person
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Booking Section */}
                             <div className="bg-white p-6 rounded-xl shadow-lg border">

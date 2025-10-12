@@ -136,3 +136,72 @@ class ToursClient:
                 return response.status_code == 200
         except Exception:
             return False
+    
+    async def calculate_group_price(self, tour_id: str, participants: int) -> Optional[Dict[Any, Any]]:
+        """
+        Calculate price based on group size
+        
+        Args:
+            tour_id: UUID string of the tour
+            participants: Number of participants
+            
+        Returns:
+            Price calculation dictionary if successful, None otherwise
+        """
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.get(
+                    f"{self.base_url}/tours/{tour_id}/calculate-price",
+                    params={"participants": participants}
+                )
+                
+                if response.status_code == 200:
+                    return response.json()
+                else:
+                    logger.error(f"Error calculating group price: {response.status_code}")
+                    return None
+                    
+        except httpx.TimeoutException:
+            logger.error("Timeout while calculating group price")
+            return None
+        except httpx.RequestError as e:
+            logger.error(f"Request error while calculating group price: {str(e)}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error while calculating group price: {str(e)}")
+            return None
+    
+    async def get_seasonal_pricing(self, tour_id: str, start_date: str, end_date: str) -> Optional[Dict[Any, Any]]:
+        """
+        Get seasonal pricing for a tour
+        
+        Args:
+            tour_id: UUID string of the tour
+            start_date: Start date in ISO format
+            end_date: End date in ISO format
+            
+        Returns:
+            Seasonal pricing dictionary if successful, None otherwise
+        """
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.get(
+                    f"{self.base_url}/tours/{tour_id}/seasonal-pricing",
+                    params={"start_date": start_date, "end_date": end_date}
+                )
+                
+                if response.status_code == 200:
+                    return response.json()
+                else:
+                    logger.error(f"Error getting seasonal pricing: {response.status_code}")
+                    return None
+                    
+        except httpx.TimeoutException:
+            logger.error("Timeout while getting seasonal pricing")
+            return None
+        except httpx.RequestError as e:
+            logger.error(f"Request error while getting seasonal pricing: {str(e)}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error while getting seasonal pricing: {str(e)}")
+            return None

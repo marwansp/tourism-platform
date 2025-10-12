@@ -57,7 +57,7 @@ const TourCard = ({ tour, showBookButton = true }: TourCardProps) => {
           </div>
           <div className="flex items-center space-x-1 text-moroccan-terracotta font-semibold">
             <DollarSign size={16} />
-            <span>${tour.price} {t('tours.perDay')}</span>
+            <span>From ${tour.price}/person</span>
           </div>
         </div>
 

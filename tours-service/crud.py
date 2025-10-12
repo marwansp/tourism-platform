@@ -3,8 +3,12 @@ from sqlalchemy.exc import SQLAlchemyError
 from typing import List, Optional
 import uuid
 
-from models import Tour, TourImage, TourReview
-from schemas import TourCreate, TourUpdate, TourReviewCreate
+from models import Tour, TourImage, TourReview, TourGroupPricing, Tag, TourTag
+from schemas import (
+    TourCreate, TourUpdate, TourReviewCreate,
+    TourGroupPricingCreate, TourGroupPricingUpdate,
+    TagCreate, TagUpdate
+)
 
 def get_tours(db: Session, skip: int = 0, limit: int = 100) -> List[Tour]:
     """
@@ -487,3 +491,261 @@ def get_tour_rating_stats(db: Session, tour_id: str) -> dict:
             'average_rating': 0.0,
             'total_reviews': 0
         }
+
+# ============================================================================
+# Group Pricing CRUD Operations (v2)
+# ============================================================================
+
+def create_group_pricing(db: Session, tour_id: str, pricing: TourGroupPricingCreate) -> Optional[TourGroupPricing]:
+    """Create group pricing tier for a tour"""
+    try:
+        tour_uuid = uuid.UUID(tour_id)
+        
+        # Verify tour exists
+        tour = get_tour_by_id(db, tour_id)
+        if not tour:
+            return None
+        
+        db_pricing = TourGroupPricing(
+            tour_id=tour_uuid,
+            min_participants=pricing.min_participants,
+            max_participants=pricing.max_participants,
+            price_per_person=pricing.price_per_person
+        )
+        db.add(db_pricing)
+        db.commit()
+        db.refresh(db_pricing)
+        return db_pricing
+    except (ValueError, SQLAlchemyError) as e:
+        db.rollback()
+        raise e
+
+
+def get_tour_group_pricing(db: Session, tour_id: str) -> List[TourGroupPricing]:
+    """Get all group pricing tiers for a tour"""
+    try:
+        tour_uuid = uuid.UUID(tour_id)
+        return db.query(TourGroupPricing).filter(
+            TourGroupPricing.tour_id == tour_uuid
+        ).order_by(TourGroupPricing.min_participants).all()
+    except ValueError:
+        return []
+
+
+def update_group_pricing(db: Session, pricing_id: str, pricing: TourGroupPricingUpdate) -> Optional[TourGroupPricing]:
+    """Update a group pricing tier"""
+    try:
+        pricing_uuid = uuid.UUID(pricing_id)
+        db_pricing = db.query(TourGroupPricing).filter(TourGroupPricing.id == pricing_uuid).first()
+        
+        if not db_pricing:
+            return None
+        
+        update_data = pricing.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_pricing, field, value)
+        
+        db.commit()
+        db.refresh(db_pricing)
+        return db_pricing
+    except (ValueError, SQLAlchemyError) as e:
+        db.rollback()
+        raise e
+
+
+def delete_group_pricing(db: Session, pricing_id: str) -> bool:
+    """Delete a group pricing tier"""
+    try:
+        pricing_uuid = uuid.UUID(pricing_id)
+        db_pricing = db.query(TourGroupPricing).filter(TourGroupPricing.id == pricing_uuid).first()
+        
+        if not db_pricing:
+            return False
+        
+        db.delete(db_pricing)
+        db.commit()
+        return True
+    except (ValueError, SQLAlchemyError) as e:
+        db.rollback()
+        raise e
+
+
+def calculate_group_price(db: Session, tour_id: str, participants: int) -> dict:
+    """Calculate price based on group size"""
+    try:
+        tour_uuid = uuid.UUID(tour_id)
+        tour = get_tour_by_id(db, tour_id)
+        
+        if not tour:
+            return {'error': 'Tour not found'}
+        
+        # Get applicable group pricing
+        pricing = db.query(TourGroupPricing).filter(
+            TourGroupPricing.tour_id == tour_uuid,
+            TourGroupPricing.min_participants <= participants,
+            TourGroupPricing.max_participants >= participants
+        ).first()
+        
+        if pricing:
+            price_per_person = pricing.price_per_person
+            total_price = price_per_person * participants
+            return {
+                'price_per_person': float(price_per_person),
+                'total_price': float(total_price),
+                'participants': participants,
+                'pricing_tier': f'{pricing.min_participants}-{pricing.max_participants} people'
+            }
+        else:
+            # Use base price if no group pricing found
+            base_price = tour.base_price or tour.price
+            total_price = base_price * participants
+            return {
+                'price_per_person': float(base_price),
+                'total_price': float(total_price),
+                'participants': participants,
+                'pricing_tier': 'Standard pricing'
+            }
+    except ValueError:
+        return {'error': 'Invalid tour ID'}
+
+
+# ============================================================================
+# Tag CRUD Operations (v2)
+# ============================================================================
+
+def create_tag(db: Session, tag: TagCreate) -> Tag:
+    """Create a new tag"""
+    try:
+        db_tag = Tag(
+            name=tag.name,
+            icon=tag.icon
+        )
+        db.add(db_tag)
+        db.commit()
+        db.refresh(db_tag)
+        return db_tag
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise e
+
+
+def get_all_tags(db: Session, skip: int = 0, limit: int = 100) -> List[Tag]:
+    """Get all available tags"""
+    return db.query(Tag).offset(skip).limit(limit).all()
+
+
+def get_tag_by_id(db: Session, tag_id: str) -> Optional[Tag]:
+    """Get a specific tag by ID"""
+    try:
+        tag_uuid = uuid.UUID(tag_id)
+        return db.query(Tag).filter(Tag.id == tag_uuid).first()
+    except ValueError:
+        return None
+
+
+def update_tag(db: Session, tag_id: str, tag: TagUpdate) -> Optional[Tag]:
+    """Update a tag"""
+    try:
+        tag_uuid = uuid.UUID(tag_id)
+        db_tag = db.query(Tag).filter(Tag.id == tag_uuid).first()
+        
+        if not db_tag:
+            return None
+        
+        update_data = tag.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_tag, field, value)
+        
+        db.commit()
+        db.refresh(db_tag)
+        return db_tag
+    except (ValueError, SQLAlchemyError) as e:
+        db.rollback()
+        raise e
+
+
+def delete_tag(db: Session, tag_id: str) -> bool:
+    """Delete a tag"""
+    try:
+        tag_uuid = uuid.UUID(tag_id)
+        db_tag = db.query(Tag).filter(Tag.id == tag_uuid).first()
+        
+        if not db_tag:
+            return False
+        
+        db.delete(db_tag)
+        db.commit()
+        return True
+    except (ValueError, SQLAlchemyError) as e:
+        db.rollback()
+        raise e
+
+
+# ============================================================================
+# Tour-Tag Association CRUD Operations (v2)
+# ============================================================================
+
+def add_tag_to_tour(db: Session, tour_id: str, tag_id: str) -> Optional[TourTag]:
+    """Add a tag to a tour"""
+    try:
+        tour_uuid = uuid.UUID(tour_id)
+        tag_uuid = uuid.UUID(tag_id)
+        
+        # Check if association already exists
+        existing = db.query(TourTag).filter(
+            TourTag.tour_id == tour_uuid,
+            TourTag.tag_id == tag_uuid
+        ).first()
+        
+        if existing:
+            return existing
+        
+        # Verify tour and tag exist
+        tour = get_tour_by_id(db, tour_id)
+        tag = get_tag_by_id(db, tag_id)
+        
+        if not tour or not tag:
+            return None
+        
+        db_tour_tag = TourTag(
+            tour_id=tour_uuid,
+            tag_id=tag_uuid
+        )
+        db.add(db_tour_tag)
+        db.commit()
+        db.refresh(db_tour_tag)
+        return db_tour_tag
+    except (ValueError, SQLAlchemyError) as e:
+        db.rollback()
+        raise e
+
+
+def get_tour_tags(db: Session, tour_id: str) -> List[TourTag]:
+    """Get all tags for a tour"""
+    try:
+        tour_uuid = uuid.UUID(tour_id)
+        return db.query(TourTag).filter(TourTag.tour_id == tour_uuid).all()
+    except ValueError:
+        return []
+
+
+def remove_tag_from_tour(db: Session, tour_id: str, tag_id: str) -> bool:
+    """Remove a tag from a tour"""
+    try:
+        tour_uuid = uuid.UUID(tour_id)
+        tag_uuid = uuid.UUID(tag_id)
+        
+        db_tour_tag = db.query(TourTag).filter(
+            TourTag.tour_id == tour_uuid,
+            TourTag.tag_id == tag_uuid
+        ).first()
+        
+        if not db_tour_tag:
+            return False
+        
+        db.delete(db_tour_tag)
+        db.commit()
+        return True
+    except (ValueError, SQLAlchemyError) as e:
+        db.rollback()
+        raise e

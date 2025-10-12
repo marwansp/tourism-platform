@@ -5,7 +5,7 @@ import Footer from './components/Footer'
 import HomePage from './pages/HomePage'
 import ToursPage from './pages/ToursPage'
 import TourDetailsPage from './pages/TourDetailsPage'
-import BookingPage from './pages/BookingPage'
+import BookingPageV2 from './pages/BookingPageV2'
 import GalleryPage from './pages/GalleryPage'
 import ContactPage from './pages/ContactPage'
 import AdminPage from './pages/AdminPage'
@@ -34,7 +34,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/tours" element={<ToursPage />} />
           <Route path="/tours/:id" element={<TourDetailsPage />} />
-          <Route path="/booking" element={<BookingPage />} />
+          <Route path="/booking" element={<BookingPageV2 />} />
           <Route path="/gallery" element={<GalleryPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/admin" element={<AdminPage />} />

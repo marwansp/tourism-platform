@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, Edit, Trash2, Upload, Image, BarChart3, Calendar, Eye, EyeOff, CheckCircle, XCircle, Clock, Mail, MessageSquare, Star } from 'lucide-react'
+import { Plus, Edit, Trash2, Upload, Image, BarChart3, Calendar, Eye, EyeOff, CheckCircle, XCircle, Clock, Mail, MessageSquare, Star, Settings, Tag, Users } from 'lucide-react'
 import { toursApi } from '../api/config'
 import { bookingsService, BookingResponse } from '../api/bookings'
 import { messagingService, NotificationResponse } from '../api/messaging'
 import toast from 'react-hot-toast'
 import MultiImageTourForm from '../components/MultiImageTourForm'
+import GroupPricingManager from '../components/GroupPricingManager'
+import TagManager from '../components/TagManager'
 
 interface TourImage {
   id?: string
@@ -60,7 +62,8 @@ interface MediaStats {
 
 const AdminPage: React.FC = () => {
   const { t } = useTranslation()
-  const [activeTab, setActiveTab] = useState<'tours' | 'gallery' | 'bookings' | 'messages'>('tours')
+  const [activeTab, setActiveTab] = useState<'tours' | 'gallery' | 'bookings' | 'messages' | 'settings'>('tours')
+  const [selectedTourForSettings, setSelectedTourForSettings] = useState<Tour | null>(null)
   const [tours, setTours] = useState<Tour[]>([])
   const [bookings, setBookings] = useState<BookingResponse[]>([])
   const [messages, setMessages] = useState<NotificationResponse[]>([])
@@ -471,6 +474,16 @@ const AdminPage: React.FC = () => {
                   {messages.filter(m => m.status === 'failed').length}
                 </span>
               )}
+            </button>
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'settings'
+                ? 'bg-white text-orange-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+                }`}
+            >
+              <Settings className="w-4 h-4 inline mr-2" />
+              Settings
             </button>
             <button
               onClick={() => setActiveTab('gallery')}
@@ -971,6 +984,60 @@ const AdminPage: React.FC = () => {
               </div>
             )}
           </>
+        )}
+
+        {/* Settings Tab - Tour Pricing & Tags */}
+        {activeTab === 'settings' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">Tour Settings</h2>
+            </div>
+
+            {/* Tour Selector */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Tour to Manage
+              </label>
+              <select
+                value={selectedTourForSettings?.id || ''}
+                onChange={(e) => {
+                  const tour = tours.find(t => t.id === e.target.value)
+                  setSelectedTourForSettings(tour || null)
+                }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-moroccan-terracotta focus:border-transparent"
+              >
+                <option value="">-- Select a tour --</option>
+                {tours.map((tour) => (
+                  <option key={tour.id} value={tour.id}>
+                    {tour.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedTourForSettings && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Group Pricing Manager */}
+                <GroupPricingManager
+                  tourId={selectedTourForSettings.id}
+                  tourTitle={selectedTourForSettings.title}
+                />
+
+                {/* Tag Manager for Tour */}
+                <TagManager
+                  tourId={selectedTourForSettings.id}
+                  tourTitle={selectedTourForSettings.title}
+                  mode="tour"
+                />
+              </div>
+            )}
+
+            {/* Global Tag Manager */}
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Global Tag Management</h3>
+              <TagManager mode="global" />
+            </div>
+          </div>
         )}
       </div>
     </div>
