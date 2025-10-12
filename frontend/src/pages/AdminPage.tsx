@@ -531,8 +531,8 @@ const AdminPage: React.FC = () => {
                   location: editingTour.location,
                   max_participants: editingTour.max_participants,
                   difficulty_level: editingTour.difficulty_level,
-                  includes: editingTour.includes.join(', '),
-                  available_dates: editingTour.available_dates.join(', '),
+                  includes: Array.isArray(editingTour.includes) ? editingTour.includes.join(', ') : '',
+                  available_dates: Array.isArray(editingTour.available_dates) ? editingTour.available_dates.join(', ') : '',
                   images: editingTour.images || []
                 }}
                 onSubmit={handleUpdateTour}
