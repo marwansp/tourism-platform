@@ -303,7 +303,7 @@ const BookingPageV2 = () => {
                                             </div>
                                             <div className="flex justify-between items-center py-3 border-b border-gray-200">
                                                 <span className="text-gray-700 font-medium">Price per Person:</span>
-                                                <span className="font-bold text-gray-900 text-lg">${priceInfo.price_per_person}</span>
+                                                <span className="font-bold text-gray-900 text-lg">€{priceInfo.price_per_person}</span>
                                             </div>
                                             <div className="flex justify-between items-center py-3 border-b border-gray-200">
                                                 <span className="text-gray-700 font-medium">Number of Participants:</span>
@@ -313,7 +313,7 @@ const BookingPageV2 = () => {
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-xl font-bold text-gray-900">Total Price:</span>
                                                     <span className="text-3xl font-bold text-moroccan-terracotta">
-                                                        ${priceInfo.total_price}
+                                                        €{priceInfo.total_price}
                                                     </span>
                                                 </div>
                                             </div>

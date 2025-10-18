@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Helmet } from 'react-helmet-async'
 import { ArrowRight, Star, Users, Shield } from 'lucide-react'
 import TourCard from '../components/TourCard'
+import SEO from '../components/SEO'
 import { Tour, toursService } from '../api/tours'
 
 const HomePage = () => {
@@ -44,12 +44,35 @@ const HomePage = () => {
     }
   ]
 
+  // Structured Data for Organization
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "TravelAgency",
+    "name": "Morocco Tours",
+    "description": "Authentic Morocco tours and Sahara desert adventures. Experience the magic of Morocco with our guided tours.",
+    "url": window.location.origin,
+    "telephone": "+212661708973",
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "MA",
+      "addressLocality": "Marrakech"
+    },
+    "priceRange": "€€",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "reviewCount": "150"
+    }
+  }
+
   return (
     <>
-      <Helmet>
-        <title>{t('meta.title')}</title>
-        <meta name="description" content={t('meta.description')} />
-      </Helmet>
+      <SEO
+        title="Morocco Tours & Sahara Desert Adventures"
+        description="Discover authentic Morocco tours from Marrakech. Sahara desert tours, Atlas Mountains adventures, cultural experiences. Book your Morocco tour package today! Best prices guaranteed."
+        keywords="Morocco tours, Sahara desert tour, Morocco tour packages, Marrakech tours, Morocco desert tours, tours to Morocco, Morocco travel, Morocco vacation, Morocco guided tours, Morocco camel trekking, Atlas Mountains tours, Morocco adventure tours"
+        structuredData={organizationSchema}
+      />
 
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">

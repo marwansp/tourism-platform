@@ -24,6 +24,7 @@ class StorageService:
             self.minio_access_key = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
             self.minio_secret_key = os.getenv("MINIO_SECRET_KEY", "minioadmin")
             self.bucket_name = os.getenv("MINIO_BUCKET", "tourism-media")
+            self.tour_bucket_name = "tour-images"  # Separate bucket for tour images
             
             try:
                 self.minio_client = Minio(
@@ -33,20 +34,24 @@ class StorageService:
                     secure=False  # Set to True for HTTPS
                 )
                 self._ensure_bucket_exists()
+                self._ensure_bucket_exists(self.tour_bucket_name)
             except Exception as e:
                 logger.warning(f"MinIO not available, falling back to local storage: {str(e)}")
                 self.use_minio = False
         
         if not self.use_minio:
             self.upload_dir = os.getenv("UPLOAD_DIR", "/app/uploads")
+            self.tour_upload_dir = os.path.join(self.upload_dir, "tours")
             os.makedirs(self.upload_dir, exist_ok=True)
+            os.makedirs(self.tour_upload_dir, exist_ok=True)
     
-    def _ensure_bucket_exists(self):
+    def _ensure_bucket_exists(self, bucket_name: str = None):
         """Ensure the MinIO bucket exists"""
         try:
-            if not self.minio_client.bucket_exists(self.bucket_name):
-                self.minio_client.make_bucket(self.bucket_name)
-                logger.info(f"Created MinIO bucket: {self.bucket_name}")
+            bucket = bucket_name or self.bucket_name
+            if not self.minio_client.bucket_exists(bucket):
+                self.minio_client.make_bucket(bucket)
+                logger.info(f"Created MinIO bucket: {bucket}")
         except S3Error as e:
             logger.error(f"Error creating MinIO bucket: {str(e)}")
             raise
@@ -79,12 +84,42 @@ class StorageService:
             logger.error(f"Error uploading file: {str(e)}")
             raise
     
-    async def _upload_to_minio(self, filename: str, content: bytes, content_type: str) -> Dict[str, Any]:
+    async def upload_tour_image(self, file: UploadFile, file_content: bytes) -> Dict[str, Any]:
+        """
+        Upload tour image to separate storage bucket
+        
+        Args:
+            file: FastAPI UploadFile object
+            file_content: File content as bytes
+            
+        Returns:
+            Dictionary with file information
+        """
+        try:
+            # Generate unique filename
+            file_extension = self._get_file_extension(file.filename)
+            unique_filename = f"{uuid.uuid4()}{file_extension}"
+            
+            # Validate and process image
+            processed_content = await self._process_image(file_content, file.content_type)
+            
+            if self.use_minio:
+                return await self._upload_to_minio(unique_filename, processed_content, file.content_type, bucket=self.tour_bucket_name)
+            else:
+                return await self._upload_to_local(unique_filename, processed_content, file.content_type, subfolder="tours")
+                
+        except Exception as e:
+            logger.error(f"Error uploading tour image: {str(e)}")
+            raise
+    
+    async def _upload_to_minio(self, filename: str, content: bytes, content_type: str, bucket: str = None) -> Dict[str, Any]:
         """Upload file to MinIO"""
         try:
+            bucket_name = bucket or self.bucket_name
+            
             # Upload to MinIO
             self.minio_client.put_object(
-                self.bucket_name,
+                bucket_name,
                 filename,
                 io.BytesIO(content),
                 length=len(content),
@@ -92,7 +127,7 @@ class StorageService:
             )
             
             # Generate URL
-            url = f"http://{self.minio_endpoint}/{self.bucket_name}/{filename}"
+            url = f"http://{self.minio_endpoint}/{bucket_name}/{filename}"
             
             return {
                 "url": url,
@@ -105,16 +140,19 @@ class StorageService:
             logger.error(f"MinIO upload error: {str(e)}")
             raise
     
-    async def _upload_to_local(self, filename: str, content: bytes, content_type: str) -> Dict[str, Any]:
+    async def _upload_to_local(self, filename: str, content: bytes, content_type: str, subfolder: str = None) -> Dict[str, Any]:
         """Upload file to local filesystem"""
         try:
-            file_path = os.path.join(self.upload_dir, filename)
+            upload_dir = os.path.join(self.upload_dir, subfolder) if subfolder else self.upload_dir
+            os.makedirs(upload_dir, exist_ok=True)
+            
+            file_path = os.path.join(upload_dir, filename)
             
             async with aiofiles.open(file_path, 'wb') as f:
                 await f.write(content)
             
             # Generate URL (relative path for local storage)
-            url = f"/media/{filename}"
+            url = f"/media/{subfolder}/{filename}" if subfolder else f"/media/{filename}"
             
             return {
                 "url": url,

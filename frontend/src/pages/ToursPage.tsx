@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Helmet } from 'react-helmet-async'
 import TourCard from '../components/TourCard'
+import SEO from '../components/SEO'
 import { Tour, toursService } from '../api/tours'
 
 const ToursPage = () => {
@@ -28,12 +28,37 @@ const ToursPage = () => {
     fetchTours()
   }, [t])
 
+  // Structured Data for Tours List
+  const toursListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Morocco Tours",
+    "description": "Browse our collection of authentic Morocco tours and desert adventures",
+    "numberOfItems": tours.length,
+    "itemListElement": tours.slice(0, 10).map((tour, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": "Product",
+        "name": tour.title,
+        "description": tour.description,
+        "offers": {
+          "@type": "Offer",
+          "price": tour.price,
+          "priceCurrency": "EUR"
+        }
+      }
+    }))
+  }
+
   return (
     <>
-      <Helmet>
-        <title>{t('tours.title')} - Morocco Tourism</title>
-        <meta name="description" content={t('tours.subtitle')} />
-      </Helmet>
+      <SEO
+        title="Morocco Tours & Desert Tour Packages"
+        description="Explore Morocco with our authentic guided tours. Sahara desert tours from Marrakech, Fes tours, Atlas Mountains adventures, camel trekking. Book your Morocco tour package today!"
+        keywords="Morocco tours, Morocco tour packages, Sahara desert tour, Marrakech tours, Fes tours, Morocco desert tours, Morocco guided tours, Morocco private tours, Morocco camel trekking, Atlas Mountains tours, Morocco adventure tours, Morocco cultural tours"
+        structuredData={toursListSchema}
+      />
 
       <div className="min-h-screen bg-gray-50">
         {/* Header */}

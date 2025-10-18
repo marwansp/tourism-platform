@@ -242,8 +242,7 @@ const TourDetailsPage = () => {
                                         <span className="font-medium">{t('tourDetails.duration')}: {tour.duration}</span>
                                     </div>
                                     <div className="flex items-center space-x-2 text-moroccan-terracotta">
-                                        <DollarSign size={20} />
-                                        <span className="font-semibold text-xl">From ${tour.price}/person</span>
+                                        <span className="font-semibold text-xl">From €{tour.price}/person</span>
                                     </div>
                                 </div>
                             </div>
@@ -272,9 +271,10 @@ const TourDetailsPage = () => {
                             {/* Description */}
                             <div>
                                 <h2 className="text-xl font-semibold text-gray-900 mb-4">About This Tour</h2>
-                                <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                                    {tour.description}
-                                </p>
+                                <div 
+                                    className="tour-description text-gray-700 leading-relaxed"
+                                    dangerouslySetInnerHTML={{ __html: tour.description }}
+                                />
                             </div>
 
                             {/* Group Pricing */}
@@ -298,7 +298,7 @@ const TourDetailsPage = () => {
                                                     }
                                                 </span>
                                                 <span className="text-moroccan-terracotta font-bold">
-                                                    {pricing.price_per_person} MAD/person
+                                                    €{pricing.price_per_person}/person
                                                 </span>
                                             </div>
                                         ))}

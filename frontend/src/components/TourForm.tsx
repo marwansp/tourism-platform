@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react'
-import { Save, X } from 'lucide-react'
+import React, { useState } from 'react'
+import { Save, X, Upload, Loader2 } from 'lucide-react'
+import { uploadTourImage } from '../api/media'
+import RichTextEditor from './RichTextEditor'
 
 interface TourFormData {
   title: string
@@ -41,6 +43,8 @@ const TourForm: React.FC<TourFormProps> = ({
   submitText
 }) => {
   const [formData, setFormData] = useState<TourFormData>(() => initialData || defaultFormData)
+  const [uploading, setUploading] = useState(false)
+  const [imagePreview, setImagePreview] = useState<string>(initialData?.image_url || '')
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -48,6 +52,45 @@ const TourForm: React.FC<TourFormProps> = ({
       ...prev,
       [name]: name === 'price' || name === 'max_participants' ? Number(value) : value
     }))
+
+    // Update preview when URL changes
+    if (name === 'image_url') {
+      setImagePreview(value)
+    }
+  }
+
+  const handleDescriptionChange = (value: string) => {
+    setFormData(prev => ({ ...prev, description: value }))
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file')
+      return
+    }
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB')
+      return
+    }
+
+    setUploading(true)
+    try {
+      const response = await uploadTourImage(file)
+      setFormData(prev => ({ ...prev, image_url: response.url }))
+      setImagePreview(response.url)
+      alert('Image uploaded successfully!')
+    } catch (error) {
+      console.error('Upload error:', error)
+      alert('Failed to upload image. Please try again.')
+    } finally {
+      setUploading(false)
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -69,7 +112,7 @@ const TourForm: React.FC<TourFormProps> = ({
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
           <input
@@ -83,7 +126,7 @@ const TourForm: React.FC<TourFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Price (MAD)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Price (EUR €)</label>
           <input
             type="number"
             name="price"
@@ -137,26 +180,73 @@ const TourForm: React.FC<TourFormProps> = ({
       </div>
 
       <div className="mt-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-        <textarea
-          name="description"
+        <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+        <RichTextEditor
           value={formData.description}
-          onChange={handleInputChange}
-          required
-          rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+          onChange={handleDescriptionChange}
+          placeholder="Write a detailed tour description with headings, bullet points, and formatting..."
         />
       </div>
 
       <div className="mt-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-        <input
-          type="url"
-          name="image_url"
-          value={formData.image_url}
-          onChange={handleInputChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-        />
+        <label className="block text-sm font-medium text-gray-700 mb-2">Tour Image</label>
+
+        {/* Image Preview */}
+        {imagePreview && (
+          <div className="mb-3">
+            <img
+              src={imagePreview}
+              alt="Preview"
+              className="w-full h-48 object-cover rounded-md border border-gray-300"
+              onError={() => setImagePreview('')}
+            />
+          </div>
+        )}
+
+        {/* File Upload Button */}
+        <div className="mb-3">
+          <label className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 cursor-pointer">
+            {uploading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                Upload from Computer
+              </>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              disabled={uploading}
+              className="hidden"
+            />
+          </label>
+          <p className="text-xs text-gray-500 mt-1">Max 10MB • JPG, PNG, WEBP</p>
+        </div>
+
+        {/* OR Divider */}
+        <div className="flex items-center gap-2 my-3">
+          <div className="flex-1 border-t border-gray-300"></div>
+          <span className="text-sm text-gray-500">OR</span>
+          <div className="flex-1 border-t border-gray-300"></div>
+        </div>
+
+        {/* URL Input */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">External Image URL</label>
+          <input
+            type="url"
+            name="image_url"
+            value={formData.image_url}
+            onChange={handleInputChange}
+            placeholder="https://example.com/image.jpg"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+        </div>
       </div>
 
       <div className="mt-4">

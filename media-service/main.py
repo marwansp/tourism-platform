@@ -225,5 +225,40 @@ async def get_media_stats(db: Session = Depends(get_db)):
             "storage_available": 0
         }
 
+# Tour image upload endpoint (separate from gallery)
+@app.post("/upload/tour-image")
+async def upload_tour_image(file: UploadFile = File(...)):
+    """Upload tour image to separate storage bucket (admin only)"""
+    try:
+        # Validate file type
+        if not file.content_type or not file.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="Only image files are allowed")
+        
+        # Validate file size (10MB limit)
+        max_size = 10 * 1024 * 1024  # 10MB
+        file_content = await file.read()
+        if len(file_content) > max_size:
+            raise HTTPException(status_code=400, detail="File size too large (max 10MB)")
+        
+        # Reset file pointer
+        await file.seek(0)
+        
+        # Upload to storage (will use tour-images bucket)
+        file_info = await storage_service.upload_tour_image(file, file_content)
+        
+        return {
+            "url": file_info["url"],
+            "filename": file_info["filename"],
+            "file_size": file_info["file_size"],
+            "mime_type": file_info["mime_type"],
+            "message": "Tour image uploaded successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error uploading tour image: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to upload tour image: {str(e)}")
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8040)

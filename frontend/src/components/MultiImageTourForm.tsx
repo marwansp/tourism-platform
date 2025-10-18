@@ -1,5 +1,8 @@
 import React, { useState } from 'react'
-import { Save, X, Plus, Trash2, Image as ImageIcon, Star } from 'lucide-react'
+import { Save, X, Plus, Trash2, Image as ImageIcon, Star, Upload, Loader2 } from 'lucide-react'
+import { uploadTourImage } from '../api/media'
+import toast from 'react-hot-toast'
+import RichTextEditor from './RichTextEditor'
 
 interface TourImage {
     image_url: string
@@ -50,6 +53,7 @@ const MultiImageTourForm: React.FC<MultiImageTourFormProps> = ({
     const [formData, setFormData] = useState<TourFormData>(() => {
         return initialData || defaultFormData
     })
+    const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target
@@ -57,6 +61,10 @@ const MultiImageTourForm: React.FC<MultiImageTourFormProps> = ({
             ...prev,
             [name]: name === 'price' || name === 'max_participants' ? Number(value) : value
         }))
+    }
+
+    const handleDescriptionChange = (value: string) => {
+        setFormData(prev => ({ ...prev, description: value }))
     }
 
     const addImage = () => {
@@ -102,17 +110,48 @@ const MultiImageTourForm: React.FC<MultiImageTourFormProps> = ({
         }))
     }
 
+    const handleImageUpload = async (index: number, file: File) => {
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please select an image file')
+            return
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            toast.error('File size must be less than 10MB')
+            return
+        }
+
+        setUploadingIndex(index)
+        try {
+            const response = await uploadTourImage(file)
+            updateImage(index, 'image_url', response.url)
+            toast.success('Image uploaded successfully!')
+        } catch (error) {
+            console.error('Upload error:', error)
+            toast.error('Failed to upload image')
+        } finally {
+            setUploadingIndex(null)
+        }
+    }
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (formData.images.length > 0) {
-            const hasMain = formData.images.some(img => img.is_main)
+        // Filter out images with empty URLs
+        const validImages = formData.images.filter(img => img.image_url && img.image_url.trim() !== '')
+
+        if (validImages.length > 0) {
+            const hasMain = validImages.some(img => img.is_main)
             if (!hasMain) {
-                formData.images[0].is_main = true
+                validImages[0].is_main = true
             }
         }
 
-        onSubmit(formData)
+        // Submit with only valid images
+        onSubmit({
+            ...formData,
+            images: validImages
+        })
     }
 
     return (
@@ -148,7 +187,7 @@ const MultiImageTourForm: React.FC<MultiImageTourFormProps> = ({
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Price (MAD)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Price (EUR €)</label>
                         <input
                             type="number"
                             name="price"
@@ -203,14 +242,11 @@ const MultiImageTourForm: React.FC<MultiImageTourFormProps> = ({
                 </div>
 
                 <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <textarea
-                        name="description"
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <RichTextEditor
                         value={formData.description}
-                        onChange={handleInputChange}
-                        required
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        onChange={handleDescriptionChange}
+                        placeholder="Write a detailed tour description with headings, bullet points, and formatting..."
                     />
                 </div>
 
@@ -279,14 +315,46 @@ const MultiImageTourForm: React.FC<MultiImageTourFormProps> = ({
 
                                         <div className="flex-1 space-y-3">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
                                                     Image URL
                                                 </label>
+                                                
+                                                {/* Upload Button */}
+                                                <div className="mb-2">
+                                                    <label className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 cursor-pointer text-sm">
+                                                        {uploadingIndex === index ? (
+                                                            <>
+                                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                                Uploading...
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Upload className="w-4 h-4" />
+                                                                Upload Image
+                                                            </>
+                                                        )}
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0]
+                                                                if (file) {
+                                                                    handleImageUpload(index, file)
+                                                                }
+                                                                e.target.value = ''
+                                                            }}
+                                                            disabled={uploadingIndex === index}
+                                                            className="hidden"
+                                                        />
+                                                    </label>
+                                                    <span className="text-xs text-gray-500 ml-2">or enter URL below</span>
+                                                </div>
+                                                
                                                 <input
-                                                    type="url"
+                                                    type="text"
                                                     value={image.image_url}
                                                     onChange={(e) => updateImage(index, 'image_url', e.target.value)}
-                                                    placeholder="https://example.com/image.jpg"
+                                                    placeholder="https://example.com/image.jpg or upload above"
                                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                                                 />
                                             </div>

@@ -45,9 +45,12 @@ const TourCard = ({ tour, showBookButton = true }: TourCardProps) => {
           {tour.title}
         </h3>
         
-        <p className="text-gray-600 mb-4 line-clamp-3">
-          {tour.description}
-        </p>
+        <div 
+          className="text-gray-600 mb-4 line-clamp-3"
+          dangerouslySetInnerHTML={{ 
+            __html: tour.description.replace(/<[^>]*>/g, ' ').substring(0, 150) + '...' 
+          }}
+        />
 
         {/* Tour Details */}
         <div className="flex items-center justify-between mb-4">
@@ -56,8 +59,7 @@ const TourCard = ({ tour, showBookButton = true }: TourCardProps) => {
             <span className="text-sm">{tour.duration}</span>
           </div>
           <div className="flex items-center space-x-1 text-moroccan-terracotta font-semibold">
-            <DollarSign size={16} />
-            <span>From ${tour.price}/person</span>
+            <span>From €{tour.price}/person</span>
           </div>
         </div>
 

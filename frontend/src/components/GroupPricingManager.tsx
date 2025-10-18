@@ -128,7 +128,7 @@ const GroupPricingManager: React.FC<GroupPricingManagerProps> = ({ tourId, tourT
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Price/Person (MAD)</label>
+              <label className="block text-sm font-medium mb-1">Price/Person (EUR €)</label>
               <input
                 type="number"
                 min="0"
@@ -203,7 +203,7 @@ const GroupPricingManager: React.FC<GroupPricingManagerProps> = ({ tourId, tourT
                       />
                     ) : (
                       <span className="text-moroccan-terracotta font-semibold">
-                        {pricing.price_per_person} MAD
+                        €{pricing.price_per_person}
                       </span>
                     )}
                   </td>

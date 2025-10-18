@@ -581,7 +581,7 @@ const AdminPage: React.FC = () => {
                         {tour.location}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {tour.price} MAD
+                        €{tour.price}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {tour.duration}
@@ -698,10 +698,10 @@ const AdminPage: React.FC = () => {
                               {booking.number_of_participants || 1} participant{(booking.number_of_participants || 1) > 1 ? 's' : ''}
                             </div>
                             <div className="text-sm text-gray-500">
-                              ${booking.price_per_person || '0'}/day
+                              €{booking.price_per_person || '0'}/day
                             </div>
                             <div className="text-sm font-semibold text-green-600">
-                              Total: ${booking.total_price || '0'}
+                              Total: €{booking.total_price || '0'}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">

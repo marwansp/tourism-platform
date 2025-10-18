@@ -2,6 +2,8 @@ import { Routes, Route } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import WhatsAppButton from './components/WhatsAppButton'
+import ScrollToTop from './components/ScrollToTop'
 import HomePage from './pages/HomePage'
 import ToursPage from './pages/ToursPage'
 import TourDetailsPage from './pages/TourDetailsPage'
@@ -27,6 +29,7 @@ function App() {
         <link rel="canonical" href={window.location.href} />
       </Helmet>
       
+      <ScrollToTop />
       <Navbar />
       
       <main className="min-h-screen">
@@ -43,6 +46,9 @@ function App() {
       </main>
       
       <Footer />
+      
+      {/* Floating WhatsApp Button */}
+      <WhatsAppButton />
     </div>
   )
 }
