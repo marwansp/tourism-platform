@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, HTTPException, Depends, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -14,7 +14,9 @@ from schemas import (
     TourReviewCreate, TourReviewResponse,
     TourGroupPricingCreate, TourGroupPricingUpdate, TourGroupPricingResponse,
     TagCreate, TagUpdate, TagResponse,
-    TourTagCreate, TourTagResponse
+    TourTagCreate, TourTagResponse,
+    TourCreateWithTranslations, TourTranslationResponse,
+    TourInfoSectionCreate, TourInfoSectionUpdate, TourInfoSectionResponse
 )
 from crud import (
     get_tours,
@@ -121,15 +123,26 @@ async def root():
 
 # Tours endpoints
 @app.get("/tours", response_model=List[TourResponse])
-async def list_tours(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """Get list of all tours with pagination"""
-    tours = get_tours(db, skip=skip, limit=limit)
+async def list_tours(
+    lang: str = Query("en", pattern="^(en|fr)$", description="Language code: en or fr"),
+    skip: int = 0, 
+    limit: int = 100, 
+    db: Session = Depends(get_db)
+):
+    """Get list of all tours with translations in specified language"""
+    from crud import get_tours_with_language
+    tours = get_tours_with_language(db, language=lang, skip=skip, limit=limit)
     return tours
 
 @app.get("/tours/{tour_id}", response_model=TourDetailResponse)
-async def get_tour_details(tour_id: str, db: Session = Depends(get_db)):
-    """Get detailed information about a specific tour with reviews"""
-    tour = get_tour_by_id(db, tour_id=tour_id)
+async def get_tour_details(
+    tour_id: str,
+    lang: str = Query("en", pattern="^(en|fr)$", description="Language code: en or fr"),
+    db: Session = Depends(get_db)
+):
+    """Get detailed information about a specific tour with reviews and translation"""
+    from crud import get_tour_with_translation
+    tour = get_tour_with_translation(db, tour_id=tour_id, language=lang)
     if tour is None:
         raise HTTPException(status_code=404, detail="Tour not found")
     
@@ -161,7 +174,7 @@ async def get_tour_details(tour_id: str, db: Session = Depends(get_db)):
 
 @app.post("/tours", response_model=TourResponse)
 async def create_new_tour(tour: TourCreate, db: Session = Depends(get_db)):
-    """Create a new tour (admin only)"""
+    """Create a new tour (admin only - legacy endpoint)"""
     try:
         return create_tour(db=db, tour=tour)
     except SQLAlchemyError as e:
@@ -170,6 +183,37 @@ async def create_new_tour(tour: TourCreate, db: Session = Depends(get_db)):
             status_code=500,
             detail="Failed to create tour. Please try again."
         )
+
+@app.post("/tours/multilingual", response_model=TourResponse)
+async def create_multilingual_tour(tour_data: TourCreateWithTranslations, db: Session = Depends(get_db)):
+    """Create a new tour with multilingual support (admin only)"""
+    try:
+        from crud import create_tour_with_translations
+        
+        # Extract non-translatable fields
+        tour_fields = {
+            'price': tour_data.price,
+            'duration': tour_data.duration,
+            'max_participants': tour_data.max_participants,
+            'difficulty_level': tour_data.difficulty_level,
+            'available_dates': tour_data.available_dates,
+            'images': [img.dict() for img in tour_data.images] if tour_data.images else []
+        }
+        
+        # Create tour with translations
+        tour = create_tour_with_translations(
+            db=db, 
+            tour_data=tour_fields, 
+            translations=tour_data.translations
+        )
+        
+        # Return tour with English translation by default
+        from crud import get_tour_with_translation
+        return get_tour_with_translation(db, str(tour.id), "en")
+        
+    except Exception as e:
+        logger.error(f"Error creating multilingual tour: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.put("/tours/{tour_id}", response_model=TourResponse)
 async def update_existing_tour(tour_id: str, tour: TourUpdate, db: Session = Depends(get_db)):
@@ -490,6 +534,121 @@ async def remove_tag_from_tour_endpoint(
     except SQLAlchemyError as e:
         logger.error(f"Error removing tag from tour: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to remove tag from tour")
+
+
+# ============================================================================
+# TOUR INFO SECTIONS ENDPOINTS
+# ============================================================================
+
+@app.get("/tours/{tour_id}/info-sections", response_model=List[TourInfoSectionResponse])
+async def get_tour_info_sections_endpoint(tour_id: str, db: Session = Depends(get_db)):
+    """Get all information sections for a tour"""
+    try:
+        from crud import get_tour_info_sections
+        sections = get_tour_info_sections(db, tour_id)
+        return sections
+    except Exception as e:
+        logger.error(f"Error fetching tour info sections: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch tour information sections")
+
+@app.post("/tours/{tour_id}/info-sections", response_model=TourInfoSectionResponse)
+async def create_tour_info_section_endpoint(
+    tour_id: str, 
+    section: TourInfoSectionCreate, 
+    db: Session = Depends(get_db)
+):
+    """Create a new information section for a tour"""
+    try:
+        from crud import create_tour_info_section, get_tour_by_id
+        
+        # Verify tour exists
+        tour = get_tour_by_id(db, tour_id)
+        if not tour:
+            raise HTTPException(status_code=404, detail="Tour not found")
+        
+        section_data = section.dict()
+        db_section = create_tour_info_section(db, tour_id, section_data)
+        return db_section
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating tour info section: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create tour information section")
+
+@app.put("/info-sections/{section_id}", response_model=TourInfoSectionResponse)
+async def update_tour_info_section_endpoint(
+    section_id: str, 
+    section: TourInfoSectionUpdate, 
+    db: Session = Depends(get_db)
+):
+    """Update a tour information section"""
+    try:
+        from crud import update_tour_info_section
+        
+        section_data = section.dict(exclude_unset=True)
+        db_section = update_tour_info_section(db, section_id, section_data)
+        
+        if not db_section:
+            raise HTTPException(status_code=404, detail="Tour information section not found")
+        
+        return db_section
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating tour info section: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update tour information section")
+
+@app.delete("/info-sections/{section_id}")
+async def delete_tour_info_section_endpoint(section_id: str, db: Session = Depends(get_db)):
+    """Delete a tour information section"""
+    try:
+        from crud import delete_tour_info_section
+        
+        success = delete_tour_info_section(db, section_id)
+        
+        if not success:
+            raise HTTPException(status_code=404, detail="Tour information section not found")
+        
+        return {"message": "Tour information section deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting tour info section: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to delete tour information section")
+
+@app.post("/tours/{tour_id}/info-sections/reorder")
+async def reorder_tour_info_sections_endpoint(
+    tour_id: str,
+    section_orders: List[dict],
+    db: Session = Depends(get_db)
+):
+    """Reorder tour information sections
+    
+    Body should be: [{"id": "section_id", "display_order": 0}, ...]
+    """
+    try:
+        from crud import reorder_tour_info_sections, get_tour_by_id
+        
+        # Verify tour exists
+        tour = get_tour_by_id(db, tour_id)
+        if not tour:
+            raise HTTPException(status_code=404, detail="Tour not found")
+        
+        success = reorder_tour_info_sections(db, tour_id, section_orders)
+        
+        if success:
+            return {"message": "Tour information sections reordered successfully"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to reorder sections")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error reordering tour info sections: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to reorder tour information sections")
 
 
 if __name__ == "__main__":

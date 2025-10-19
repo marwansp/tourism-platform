@@ -8,6 +8,7 @@ import toast from 'react-hot-toast'
 import MultiImageTourForm from '../components/MultiImageTourForm'
 import GroupPricingManager from '../components/GroupPricingManager'
 import TagManager from '../components/TagManager'
+import TourInfoSectionsManager from '../components/TourInfoSectionsManager'
 
 interface TourImage {
   id?: string
@@ -75,6 +76,7 @@ const AdminPage: React.FC = () => {
   const [mediaLoading, setMediaLoading] = useState(false)
   const [editingTour, setEditingTour] = useState<Tour | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [useMultilingual, setUseMultilingual] = useState(true)
   const [uploadingMedia, setUploadingMedia] = useState(false)
 
 
@@ -191,6 +193,46 @@ const AdminPage: React.FC = () => {
     } catch (error) {
       toast.error('Failed to add tour')
       console.error('Error adding tour:', error)
+    }
+  }
+
+  const handleAddMultilingualTour = async (data: any) => {
+    try {
+      const tourData = {
+        price: data.price,
+        duration: data.duration,
+        max_participants: data.max_participants,
+        difficulty_level: data.difficulty_level,
+        available_dates: data.available_dates ? data.available_dates.split(',').map((d: string) => d.trim()).filter((d: string) => d) : [],
+        translations: {
+          en: {
+            title: data.translations.en.title,
+            description: data.translations.en.description,
+            location: data.translations.en.location,
+            includes: data.translations.en.includes
+          },
+          fr: {
+            title: data.translations.fr.title,
+            description: data.translations.fr.description,
+            location: data.translations.fr.location,
+            includes: data.translations.fr.includes
+          }
+        },
+        images: data.images.map((img: any) => ({
+          image_url: img.image_url,
+          is_main: img.is_main,
+          display_order: img.display_order,
+          alt_text: img.alt_text
+        }))
+      }
+
+      await toursApi.post('/tours/multilingual', tourData)
+      toast.success('Multilingual tour added successfully!')
+      setShowAddForm(false)
+      fetchTours()
+    } catch (error) {
+      toast.error('Failed to add multilingual tour')
+      console.error('Error adding multilingual tour:', error)
     }
   }
 
@@ -361,29 +403,17 @@ const AdminPage: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`/api/bookings/${bookingId}/complete`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        
-        // Update local state
-        setBookings(prev => prev.map(booking => 
-          booking.id === bookingId 
-            ? { ...booking, status: 'completed' }
-            : booking
-        ))
-        
-        toast.success('Booking completed and review request sent!')
-        console.log('Review token:', result.review_token)
-      } else {
-        const error = await response.json()
-        toast.error(error.detail || 'Failed to complete booking')
-      }
+      const result = await bookingsService.completeBooking(bookingId)
+      
+      // Update local state
+      setBookings(prev => prev.map(booking => 
+        booking.id === bookingId 
+          ? { ...booking, status: 'completed' }
+          : booking
+      ))
+      
+      toast.success('Booking completed and review request sent!')
+      console.log('Review token:', result.review_token)
     } catch (error) {
       toast.error('Failed to complete booking')
       console.error('Error completing booking:', error)
@@ -503,20 +533,34 @@ const AdminPage: React.FC = () => {
           <>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-gray-900">Tour Management</h2>
-              <button
-                onClick={() => setShowAddForm(true)}
-                className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add New Tour
-              </button>
+              <div className="flex items-center gap-3">
+                {showAddForm && (
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={useMultilingual}
+                      onChange={(e) => setUseMultilingual(e.target.checked)}
+                      className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                    />
+                    <span>Multilingual (EN/FR)</span>
+                  </label>
+                )}
+                <button
+                  onClick={() => setShowAddForm(true)}
+                  className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add New Tour
+                </button>
+              </div>
             </div>
 
             {showAddForm && (
               <MultiImageTourForm
                 mode="add"
-                onSubmit={handleAddTour}
+                onSubmit={useMultilingual ? handleAddMultilingualTour : handleAddTour}
                 onCancel={handleCancel}
+                multilingual={useMultilingual}
               />
             )}
 
@@ -1016,20 +1060,27 @@ const AdminPage: React.FC = () => {
             </div>
 
             {selectedTourForSettings && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Group Pricing Manager */}
-                <GroupPricingManager
-                  tourId={selectedTourForSettings.id}
-                  tourTitle={selectedTourForSettings.title}
-                />
+              <>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Group Pricing Manager */}
+                  <GroupPricingManager
+                    tourId={selectedTourForSettings.id}
+                    tourTitle={selectedTourForSettings.title}
+                  />
 
-                {/* Tag Manager for Tour */}
-                <TagManager
-                  tourId={selectedTourForSettings.id}
-                  tourTitle={selectedTourForSettings.title}
-                  mode="tour"
-                />
-              </div>
+                  {/* Tag Manager for Tour */}
+                  <TagManager
+                    tourId={selectedTourForSettings.id}
+                    tourTitle={selectedTourForSettings.title}
+                    mode="tour"
+                  />
+                </div>
+
+                {/* Tour Info Sections Manager */}
+                <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+                  <TourInfoSectionsManager tourId={selectedTourForSettings.id} />
+                </div>
+              </>
             )}
 
             {/* Global Tag Manager */}

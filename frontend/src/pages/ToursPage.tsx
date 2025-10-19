@@ -5,7 +5,7 @@ import SEO from '../components/SEO'
 import { Tour, toursService } from '../api/tours'
 
 const ToursPage = () => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [tours, setTours] = useState<Tour[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -15,7 +15,8 @@ const ToursPage = () => {
       try {
         setLoading(true)
         setError(null)
-        const toursData = await toursService.getAllTours()
+        const currentLang = i18n.language.startsWith('fr') ? 'fr' : 'en'
+        const toursData = await toursService.getAllTours(currentLang)
         setTours(toursData)
       } catch (err) {
         setError(t('tours.error'))
@@ -26,7 +27,7 @@ const ToursPage = () => {
     }
 
     fetchTours()
-  }, [t])
+  }, [t, i18n.language])
 
   // Structured Data for Tours List
   const toursListSchema = {

@@ -48,6 +48,7 @@ class Tour(Base):
     images = relationship("TourImage", back_populates="tour", cascade="all, delete-orphan", order_by="TourImage.display_order")
     seasonal_prices = relationship("TourSeasonalPrice", back_populates="tour", cascade="all, delete-orphan")
     availability = relationship("TourAvailability", back_populates="tour", cascade="all, delete-orphan")
+    # translations relationship is defined in TourTranslation model using backref
     reviews = relationship("TourReview", back_populates="tour", cascade="all, delete-orphan", order_by="TourReview.created_at.desc()")
     group_pricing = relationship("TourGroupPricing", back_populates="tour", cascade="all, delete-orphan", order_by="TourGroupPricing.min_participants")
     tour_tags = relationship("TourTag", back_populates="tour", cascade="all, delete-orphan")
@@ -319,3 +320,81 @@ class TourTag(Base):
 
     def __repr__(self):
         return f"<TourTag(tour_id={self.tour_id}, tag_id={self.tag_id})>"
+
+
+class TourTranslation(Base):
+    """
+    SQLAlchemy model for tour translations (multilingual support)
+    Stores translatable fields for tours in different languages
+    """
+    __tablename__ = "tour_translations"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        index=True
+    )
+    tour_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey('tours.id', ondelete='CASCADE'),
+        nullable=False,
+        index=True
+    )
+    language = Column(String(5), nullable=False, index=True)  # 'en' or 'fr'
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=False)
+    location = Column(String(100), nullable=False)
+    includes = Column(Text, nullable=True)
+    
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False
+    )
+
+    # Relationship back to tour
+    tour = relationship("Tour", backref="translations")
+
+    def __repr__(self):
+        return f"<TourTranslation(tour_id={self.tour_id}, language={self.language}, title={self.title})>"
+
+
+class TourInfoSection(Base):
+    """
+    SQLAlchemy model for tour custom information sections
+    Allows admins to add unlimited custom sections with multilingual support
+    """
+    __tablename__ = "tour_info_sections"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tour_id = Column(UUID(as_uuid=True), ForeignKey('tours.id', ondelete='CASCADE'), nullable=False)
+    title_en = Column(String(200), nullable=False)
+    title_fr = Column(String(200), nullable=False)
+    content_en = Column(Text, nullable=False)
+    content_fr = Column(Text, nullable=False)
+    display_order = Column(Integer, default=0)
+    
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False
+    )
+
+    # Relationship back to tour
+    tour = relationship("Tour", backref="info_sections")
+
+    def __repr__(self):
+        return f"<TourInfoSection(tour_id={self.tour_id}, title_en={self.title_en})>"

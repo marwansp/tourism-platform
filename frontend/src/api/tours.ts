@@ -56,11 +56,64 @@ export interface PriceCalculation {
   pricing_tier: string
 }
 
+export interface MultilingualTourCreate {
+  price: number
+  duration: string
+  max_participants: number
+  difficulty_level: string
+  available_dates?: string[]
+  translations: {
+    en: {
+      title: string
+      description: string
+      location: string
+      includes?: string
+    }
+    fr: {
+      title: string
+      description: string
+      location: string
+      includes?: string
+    }
+  }
+  images?: TourImage[]
+}
+
+export interface TourInfoSection {
+  id: string
+  tour_id: string
+  title_en: string
+  title_fr: string
+  content_en: string
+  content_fr: string
+  display_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface TourInfoSectionCreate {
+  title_en: string
+  title_fr: string
+  content_en: string
+  content_fr: string
+  display_order?: number
+}
+
+export interface TourInfoSectionUpdate {
+  title_en?: string
+  title_fr?: string
+  content_en?: string
+  content_fr?: string
+  display_order?: number
+}
+
 export const toursService = {
-  // Get all tours
-  async getAllTours(): Promise<Tour[]> {
+  // Get all tours with language support
+  async getAllTours(lang: string = 'en'): Promise<Tour[]> {
     try {
-      const response = await toursApi.get('/tours')
+      const response = await toursApi.get('/tours', {
+        params: { lang }
+      })
       return response.data
     } catch (error) {
       console.error('Error fetching tours:', error)
@@ -68,10 +121,23 @@ export const toursService = {
     }
   },
 
-  // Get tour by ID
-  async getTourById(id: string): Promise<Tour> {
+  // Create multilingual tour
+  async createMultilingualTour(data: MultilingualTourCreate): Promise<Tour> {
     try {
-      const response = await toursApi.get(`/tours/${id}`)
+      const response = await toursApi.post('/tours/multilingual', data)
+      return response.data
+    } catch (error) {
+      console.error('Error creating multilingual tour:', error)
+      throw new Error('Failed to create multilingual tour')
+    }
+  },
+
+  // Get tour by ID with language support
+  async getTourById(id: string, lang: string = 'en'): Promise<Tour> {
+    try {
+      const response = await toursApi.get(`/tours/${id}`, {
+        params: { lang }
+      })
       return response.data
     } catch (error) {
       console.error('Error fetching tour:', error)
@@ -79,10 +145,12 @@ export const toursService = {
     }
   },
 
-  // Get featured tours (first 3 tours)
-  async getFeaturedTours(): Promise<Tour[]> {
+  // Get featured tours (first 3 tours) with language support
+  async getFeaturedTours(lang: string = 'en'): Promise<Tour[]> {
     try {
-      const response = await toursApi.get('/tours?limit=3')
+      const response = await toursApi.get('/tours', {
+        params: { limit: 3, lang }
+      })
       return response.data
     } catch (error) {
       console.error('Error fetching featured tours:', error)
@@ -226,6 +294,58 @@ export const toursService = {
     } catch (error) {
       console.error('Error removing tag from tour:', error)
       throw new Error('Failed to remove tag from tour')
+    }
+  },
+
+  // ============================================================================
+  // Tour Info Sections
+  // ============================================================================
+
+  async getTourInfoSections(tourId: string): Promise<TourInfoSection[]> {
+    try {
+      const response = await toursApi.get(`/tours/${tourId}/info-sections`)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching tour info sections:', error)
+      throw new Error('Failed to fetch tour information sections')
+    }
+  },
+
+  async createTourInfoSection(tourId: string, data: TourInfoSectionCreate): Promise<TourInfoSection> {
+    try {
+      const response = await toursApi.post(`/tours/${tourId}/info-sections`, data)
+      return response.data
+    } catch (error) {
+      console.error('Error creating tour info section:', error)
+      throw new Error('Failed to create tour information section')
+    }
+  },
+
+  async updateTourInfoSection(sectionId: string, data: TourInfoSectionUpdate): Promise<TourInfoSection> {
+    try {
+      const response = await toursApi.put(`/info-sections/${sectionId}`, data)
+      return response.data
+    } catch (error) {
+      console.error('Error updating tour info section:', error)
+      throw new Error('Failed to update tour information section')
+    }
+  },
+
+  async deleteTourInfoSection(sectionId: string): Promise<void> {
+    try {
+      await toursApi.delete(`/info-sections/${sectionId}`)
+    } catch (error) {
+      console.error('Error deleting tour info section:', error)
+      throw new Error('Failed to delete tour information section')
+    }
+  },
+
+  async reorderTourInfoSections(tourId: string, orders: {id: string, display_order: number}[]): Promise<void> {
+    try {
+      await toursApi.post(`/tours/${tourId}/info-sections/reorder`, orders)
+    } catch (error) {
+      console.error('Error reordering tour info sections:', error)
+      throw new Error('Failed to reorder tour information sections')
     }
   }
 }

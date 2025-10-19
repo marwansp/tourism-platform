@@ -34,7 +34,7 @@ const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
             <img
-              src="/logo.png"
+              src="/mylogo.png"
               alt="Atlas Brothers Tours Logo"
               className="logo-image h-24 w-auto"
             />

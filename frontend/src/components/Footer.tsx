@@ -27,7 +27,7 @@ const Footer = () => {
           <div className="space-y-4">
             <Link to="/" className="flex items-center space-x-3">
               <img
-                src="/logo.png"
+                src="/mylogo.png"
                 alt="Atlas Brothers Tours Logo"
                 className="logo-image h-16 w-auto"
               />

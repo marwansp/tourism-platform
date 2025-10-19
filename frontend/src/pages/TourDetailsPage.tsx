@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Helmet } from 'react-helmet-async'
-import { ArrowLeft, Clock, DollarSign, ChevronLeft, ChevronRight, Star, Users, Tag } from 'lucide-react'
-import { Tour, toursService, GroupPricing, TourTag } from '../api/tours'
+import { ArrowLeft, Clock, DollarSign, ChevronLeft, ChevronRight, Star, Users, Tag, ChevronDown, ChevronUp } from 'lucide-react'
+import { Tour, toursService, GroupPricing, TourTag, TourInfoSection } from '../api/tours'
 
 interface Review {
     id: string;
@@ -17,7 +17,7 @@ interface Review {
 const TourDetailsPage = () => {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
     const [tour, setTour] = useState<Tour | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -28,6 +28,8 @@ const TourDetailsPage = () => {
     const [groupPricing, setGroupPricing] = useState<GroupPricing[]>([])
     const [tourTags, setTourTags] = useState<TourTag[]>([])
     const [selectedParticipants, setSelectedParticipants] = useState(1)
+    const [infoSections, setInfoSections] = useState<TourInfoSection[]>([])
+    const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
 
     useEffect(() => {
         const fetchTour = async () => {
@@ -40,7 +42,8 @@ const TourDetailsPage = () => {
             try {
                 setLoading(true)
                 setError(null)
-                const tourData = await toursService.getTourById(id)
+                const currentLang = i18n.language.startsWith('fr') ? 'fr' : 'en'
+                const tourData = await toursService.getTourById(id, currentLang)
                 setTour(tourData)
                 
                 // Fetch group pricing
@@ -57,6 +60,14 @@ const TourDetailsPage = () => {
                     setTourTags(tags)
                 } catch (err) {
                     console.log('No tags available')
+                }
+                
+                // Fetch tour info sections
+                try {
+                    const sections = await toursService.getTourInfoSections(id)
+                    setInfoSections(sections)
+                } catch (err) {
+                    console.log('No info sections available')
                 }
                 
                 // Fetch reviews
@@ -82,7 +93,19 @@ const TourDetailsPage = () => {
         }
 
         fetchTour()
-    }, [id, t])
+    }, [id, t, i18n.language])
+
+    const toggleSection = (sectionId: string) => {
+        setExpandedSections(prev => {
+            const newSet = new Set(prev)
+            if (newSet.has(sectionId)) {
+                newSet.delete(sectionId)
+            } else {
+                newSet.add(sectionId)
+            }
+            return newSet
+        })
+    }
 
     if (loading) {
         return (
@@ -226,6 +249,41 @@ const TourDetailsPage = () => {
                                     ))}
                                 </div>
                             )}
+
+                            {/* Tour Info Sections */}
+                            {infoSections.length > 0 && (
+                                <div className="space-y-3 mt-6">
+                                    {infoSections.map((section) => {
+                                        const isExpanded = expandedSections.has(section.id)
+                                        const title = i18n.language.startsWith('fr') ? section.title_fr : section.title_en
+                                        const content = i18n.language.startsWith('fr') ? section.content_fr : section.content_en
+                                        
+                                        return (
+                                            <div key={section.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                                                <button
+                                                    onClick={() => toggleSection(section.id)}
+                                                    className="w-full px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between text-left"
+                                                >
+                                                    <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+                                                    {isExpanded ? (
+                                                        <ChevronUp className="w-5 h-5 text-gray-500" />
+                                                    ) : (
+                                                        <ChevronDown className="w-5 h-5 text-gray-500" />
+                                                    )}
+                                                </button>
+                                                {isExpanded && (
+                                                    <div className="px-6 py-4 bg-white border-t border-gray-200">
+                                                        <div 
+                                                            className="prose prose-sm max-w-none text-gray-700"
+                                                            dangerouslySetInnerHTML={{ __html: content }}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            )}
                         </div>
 
                         {/* Details */}
@@ -242,7 +300,7 @@ const TourDetailsPage = () => {
                                         <span className="font-medium">{t('tourDetails.duration')}: {tour.duration}</span>
                                     </div>
                                     <div className="flex items-center space-x-2 text-moroccan-terracotta">
-                                        <span className="font-semibold text-xl">From €{tour.price}/person</span>
+                                        <span className="font-semibold text-xl">{t('tourDetails.from')} €{tour.price}{t('tourDetails.perPerson')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -270,7 +328,7 @@ const TourDetailsPage = () => {
 
                             {/* Description */}
                             <div>
-                                <h2 className="text-xl font-semibold text-gray-900 mb-4">About This Tour</h2>
+                                <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('tourDetails.aboutThisTour')}</h2>
                                 <div 
                                     className="tour-description text-gray-700 leading-relaxed"
                                     dangerouslySetInnerHTML={{ __html: tour.description }}
@@ -282,9 +340,9 @@ const TourDetailsPage = () => {
                                 <div className="bg-gradient-to-br from-moroccan-sand to-white p-6 rounded-xl border border-moroccan-terracotta/20">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
                                         <Users size={20} className="text-moroccan-terracotta" />
-                                        Group Pricing
+                                        {t('tourDetails.groupPricing')}
                                     </h3>
-                                    <p className="text-sm text-gray-600 mb-4">Better prices for larger groups!</p>
+                                    <p className="text-sm text-gray-600 mb-4">{t('tourDetails.betterPricesForGroups')}</p>
                                     <div className="space-y-2">
                                         {groupPricing.map((pricing) => (
                                             <div
@@ -293,12 +351,12 @@ const TourDetailsPage = () => {
                                             >
                                                 <span className="text-gray-700 font-medium">
                                                     {pricing.min_participants === pricing.max_participants
-                                                        ? `${pricing.min_participants} person${pricing.min_participants > 1 ? 's' : ''}`
-                                                        : `${pricing.min_participants}-${pricing.max_participants} people`
+                                                        ? `${pricing.min_participants} ${pricing.min_participants > 1 ? t('tourDetails.people') : t('tourDetails.person')}`
+                                                        : `${pricing.min_participants}-${pricing.max_participants} ${t('tourDetails.people')}`
                                                     }
                                                 </span>
                                                 <span className="text-moroccan-terracotta font-bold">
-                                                    €{pricing.price_per_person}/person
+                                                    €{pricing.price_per_person}{t('tourDetails.perPerson')}
                                                 </span>
                                             </div>
                                         ))}
@@ -308,9 +366,9 @@ const TourDetailsPage = () => {
 
                             {/* Booking Section */}
                             <div className="bg-white p-6 rounded-xl shadow-lg border">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Ready to Book?</h3>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('tourDetails.readyToBook')}</h3>
                                 <p className="text-gray-600 mb-6">
-                                    Secure your spot on this amazing adventure. We'll contact you to confirm all details.
+                                    {t('tourDetails.bookingDescription')}
                                 </p>
                                 <Link
                                     to={`/booking?tour=${tour.id}`}
@@ -322,15 +380,15 @@ const TourDetailsPage = () => {
 
                             {/* Contact Info */}
                             <div className="bg-moroccan-sand p-6 rounded-xl">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Questions?</h3>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('tourDetails.questions')}</h3>
                                 <p className="text-gray-700 mb-4">
-                                    Need more information or have special requests? We're here to help!
+                                    {t('tourDetails.questionsDescription')}
                                 </p>
                                 <Link
                                     to="/contact"
                                     className="text-moroccan-terracotta hover:text-moroccan-orange font-medium"
                                 >
-                                    Contact Us →
+                                    {t('tourDetails.contactUs')}
                                 </Link>
                             </div>
                         </div>
@@ -342,7 +400,7 @@ const TourDetailsPage = () => {
                     <div className="container-custom">
                         <div className="max-w-4xl mx-auto">
                             <div className="text-center mb-8">
-                                <h2 className="text-3xl font-bold text-gray-900 mb-4">Customer Reviews</h2>
+                                <h2 className="text-3xl font-bold text-gray-900 mb-4">{t('tourDetails.customerReviews')}</h2>
                                 {totalReviews > 0 ? (
                                     <div className="flex items-center justify-center space-x-4">
                                         <div className="flex items-center space-x-1">
@@ -365,7 +423,7 @@ const TourDetailsPage = () => {
                                         </span>
                                     </div>
                                 ) : (
-                                    <p className="text-gray-600">No reviews yet. Be the first to review this tour!</p>
+                                    <p className="text-gray-600">{t('tourDetails.noReviews')}</p>
                                 )}
                             </div>
 

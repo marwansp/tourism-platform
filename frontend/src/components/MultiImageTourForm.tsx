@@ -22,6 +22,11 @@ interface TourFormData {
     includes: string
     available_dates: string
     images: TourImage[]
+    // Multilingual fields
+    title_fr?: string
+    description_fr?: string
+    location_fr?: string
+    includes_fr?: string
 }
 
 interface MultiImageTourFormProps {
@@ -29,6 +34,7 @@ interface MultiImageTourFormProps {
     initialData?: TourFormData
     onSubmit: (data: TourFormData) => void
     onCancel: () => void
+    multilingual?: boolean
 }
 
 const defaultFormData: TourFormData = {
@@ -41,19 +47,25 @@ const defaultFormData: TourFormData = {
     difficulty_level: 'Easy',
     includes: '',
     available_dates: '',
-    images: []
+    images: [],
+    title_fr: '',
+    description_fr: '',
+    location_fr: '',
+    includes_fr: ''
 }
 
 const MultiImageTourForm: React.FC<MultiImageTourFormProps> = ({
     mode,
     initialData,
     onSubmit,
-    onCancel
+    onCancel,
+    multilingual = false
 }) => {
     const [formData, setFormData] = useState<TourFormData>(() => {
         return initialData || defaultFormData
     })
     const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
+    const [activeLanguage, setActiveLanguage] = useState<'en' | 'fr'>('en')
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target
@@ -64,7 +76,11 @@ const MultiImageTourForm: React.FC<MultiImageTourFormProps> = ({
     }
 
     const handleDescriptionChange = (value: string) => {
-        setFormData(prev => ({ ...prev, description: value }))
+        if (multilingual && activeLanguage === 'fr') {
+            setFormData(prev => ({ ...prev, description_fr: value }))
+        } else {
+            setFormData(prev => ({ ...prev, description: value }))
+        }
     }
 
     const addImage = () => {
@@ -137,6 +153,22 @@ const MultiImageTourForm: React.FC<MultiImageTourFormProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
 
+        // Validate multilingual fields
+        if (multilingual) {
+            if (!formData.title || !formData.title_fr) {
+                toast.error('Please provide titles in both English and French')
+                return
+            }
+            if (!formData.description || !formData.description_fr) {
+                toast.error('Please provide descriptions in both English and French')
+                return
+            }
+            if (!formData.location || !formData.location_fr) {
+                toast.error('Please provide locations in both English and French')
+                return
+            }
+        }
+
         // Filter out images with empty URLs
         const validImages = formData.images.filter(img => img.image_url && img.image_url.trim() !== '')
 
@@ -160,14 +192,43 @@ const MultiImageTourForm: React.FC<MultiImageTourFormProps> = ({
                 {mode === 'add' ? 'Add New Tour' : 'Edit Tour'}
             </h3>
 
+            {multilingual && (
+                <div className="mb-6 flex gap-2 border-b border-gray-200">
+                    <button
+                        type="button"
+                        onClick={() => setActiveLanguage('en')}
+                        className={`px-4 py-2 font-medium transition-colors ${
+                            activeLanguage === 'en'
+                                ? 'text-orange-600 border-b-2 border-orange-600'
+                                : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                    >
+                        🇬🇧 English
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveLanguage('fr')}
+                        className={`px-4 py-2 font-medium transition-colors ${
+                            activeLanguage === 'fr'
+                                ? 'text-orange-600 border-b-2 border-orange-600'
+                                : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                    >
+                        🇫🇷 Français
+                    </button>
+                </div>
+            )}
+
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Title {multilingual && `(${activeLanguage.toUpperCase()})`}
+                        </label>
                         <input
                             type="text"
-                            name="title"
-                            value={formData.title}
+                            name={multilingual && activeLanguage === 'fr' ? "title_fr" : "title"}
+                            value={multilingual && activeLanguage === 'fr' ? (formData.title_fr || '') : formData.title}
                             onChange={handleInputChange}
                             required
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -175,11 +236,13 @@ const MultiImageTourForm: React.FC<MultiImageTourFormProps> = ({
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Location {multilingual && `(${activeLanguage.toUpperCase()})`}
+                        </label>
                         <input
                             type="text"
-                            name="location"
-                            value={formData.location}
+                            name={multilingual && activeLanguage === 'fr' ? "location_fr" : "location"}
+                            value={multilingual && activeLanguage === 'fr' ? (formData.location_fr || '') : formData.location}
                             onChange={handleInputChange}
                             required
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -242,9 +305,11 @@ const MultiImageTourForm: React.FC<MultiImageTourFormProps> = ({
                 </div>
 
                 <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Description {multilingual && `(${activeLanguage.toUpperCase()})`}
+                    </label>
                     <RichTextEditor
-                        value={formData.description}
+                        value={multilingual && activeLanguage === 'fr' ? (formData.description_fr || '') : formData.description}
                         onChange={handleDescriptionChange}
                         placeholder="Write a detailed tour description with headings, bullet points, and formatting..."
                     />
@@ -252,11 +317,13 @@ const MultiImageTourForm: React.FC<MultiImageTourFormProps> = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Includes (comma-separated)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Includes (comma-separated) {multilingual && `(${activeLanguage.toUpperCase()})`}
+                        </label>
                         <input
                             type="text"
-                            name="includes"
-                            value={formData.includes}
+                            name={multilingual && activeLanguage === 'fr' ? "includes_fr" : "includes"}
+                            value={multilingual && activeLanguage === 'fr' ? (formData.includes_fr || '') : formData.includes}
                             onChange={handleInputChange}
                             placeholder="e.g., Meals, Transport, Guide"
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"

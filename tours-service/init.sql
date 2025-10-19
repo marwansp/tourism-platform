@@ -121,3 +121,108 @@ INSERT INTO tags (name, icon) VALUES
     ('Adventure', '🏃'),
     ('Luxury', '⭐')
 ON CONFLICT (name) DO NOTHING;
+
+-
+- ============================================
+-- Multilingual Support: Tour Translations
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS tour_translations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tour_id UUID NOT NULL REFERENCES tours(id) ON DELETE CASCADE,
+    language VARCHAR(10) NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    location TEXT NOT NULL,
+    includes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE(tour_id, language)
+);
+
+CREATE INDEX IF NOT EXISTS idx_tour_translations_tour_id ON tour_translations(tour_id);
+CREATE INDEX IF NOT EXISTS idx_tour_translations_language ON tour_translations(language);
+
+-- Create trigger for tour_translations updated_at
+CREATE TRIGGER update_tour_translations_updated_at 
+    BEFORE UPDATE ON tour_translations 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- Tour Info Sections (Custom Information)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS tour_info_sections (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tour_id UUID NOT NULL REFERENCES tours(id) ON DELETE CASCADE,
+    title_en TEXT NOT NULL,
+    title_fr TEXT NOT NULL,
+    content_en TEXT NOT NULL,
+    content_fr TEXT NOT NULL,
+    display_order INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_tour_info_sections_tour_id ON tour_info_sections(tour_id);
+CREATE INDEX IF NOT EXISTS idx_tour_info_sections_display_order ON tour_info_sections(tour_id, display_order);
+
+-- Create trigger for tour_info_sections updated_at
+CREATE TRIGGER update_tour_info_sections_updated_at 
+    BEFORE UPDATE ON tour_info_sections 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- Tour Reviews
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS tour_reviews (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tour_id UUID NOT NULL REFERENCES tours(id) ON DELETE CASCADE,
+    booking_id UUID,
+    customer_name VARCHAR(255) NOT NULL,
+    customer_email VARCHAR(255) NOT NULL,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    review_text TEXT,
+    is_verified BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_tour_reviews_tour_id ON tour_reviews(tour_id);
+CREATE INDEX IF NOT EXISTS idx_tour_reviews_booking_id ON tour_reviews(booking_id);
+CREATE INDEX IF NOT EXISTS idx_tour_reviews_rating ON tour_reviews(rating);
+CREATE INDEX IF NOT EXISTS idx_tour_reviews_verified ON tour_reviews(is_verified);
+
+-- Create trigger for tour_reviews updated_at
+CREATE TRIGGER update_tour_reviews_updated_at 
+    BEFORE UPDATE ON tour_reviews 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- Tour Images (Multi-image support)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS tour_images (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tour_id UUID NOT NULL REFERENCES tours(id) ON DELETE CASCADE,
+    image_url TEXT NOT NULL,
+    is_main BOOLEAN DEFAULT FALSE,
+    display_order INTEGER DEFAULT 0,
+    alt_text TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_tour_images_tour_id ON tour_images(tour_id);
+CREATE INDEX IF NOT EXISTS idx_tour_images_is_main ON tour_images(tour_id, is_main);
+CREATE INDEX IF NOT EXISTS idx_tour_images_display_order ON tour_images(tour_id, display_order);
+
+-- Create trigger for tour_images updated_at
+CREATE TRIGGER update_tour_images_updated_at 
+    BEFORE UPDATE ON tour_images 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();

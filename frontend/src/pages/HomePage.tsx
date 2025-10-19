@@ -7,14 +7,15 @@ import SEO from '../components/SEO'
 import { Tour, toursService } from '../api/tours'
 
 const HomePage = () => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [featuredTours, setFeaturedTours] = useState<Tour[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchFeaturedTours = async () => {
       try {
-        const tours = await toursService.getFeaturedTours()
+        const currentLang = i18n.language.startsWith('fr') ? 'fr' : 'en'
+        const tours = await toursService.getFeaturedTours(currentLang)
         setFeaturedTours(tours)
       } catch (error) {
         console.error('Error fetching featured tours:', error)
@@ -24,7 +25,7 @@ const HomePage = () => {
     }
 
     fetchFeaturedTours()
-  }, [])
+  }, [i18n.language])
 
   const features = [
     {

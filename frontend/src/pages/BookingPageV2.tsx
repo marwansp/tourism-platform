@@ -150,7 +150,7 @@ const BookingPageV2 = () => {
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-moroccan-terracotta mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading...</p>
+                    <p className="text-gray-600">{t('booking.loading')}</p>
                 </div>
             </div>
         )
@@ -168,10 +168,10 @@ const BookingPageV2 = () => {
                         {/* Header */}
                         <div className="text-center mb-12">
                             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                                Book Your <span className="text-moroccan-terracotta">Moroccan Adventure</span>
+                                {t('booking.bookYourAdventure')} <span className="text-moroccan-terracotta">{t('booking.moroccanAdventure')}</span>
                             </h1>
                             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                                Complete the form below to reserve your unforgettable journey through Morocco
+                                {t('booking.completeForm')}
                             </p>
                         </div>
 
@@ -182,13 +182,13 @@ const BookingPageV2 = () => {
                                     <div className="w-12 h-12 bg-gradient-to-br from-moroccan-terracotta to-moroccan-gold rounded-full flex items-center justify-center text-white font-bold text-xl">
                                         1
                                     </div>
-                                    <h2 className="text-2xl font-bold text-gray-900">Select Your Tour</h2>
+                                    <h2 className="text-2xl font-bold text-gray-900">{t('booking.selectYourTour')}</h2>
                                 </div>
                                 <select
-                                    {...register('tour_id', { required: 'Please select a tour' })}
+                                    {...register('tour_id', { required: t('booking.validation.tourRequired') })}
                                     className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-moroccan-terracotta focus:border-moroccan-terracotta transition-all text-lg bg-white hover:border-moroccan-terracotta"
                                 >
-                                    <option value="">Choose your adventure...</option>
+                                    <option value="">{t('booking.chooseAdventure')}</option>
                                     {tours.map((tour) => (
                                         <option key={tour.id} value={tour.id}>
                                             {tour.title} - {tour.duration}
@@ -209,7 +209,7 @@ const BookingPageV2 = () => {
                                         <div className="w-12 h-12 bg-gradient-to-br from-moroccan-blue to-moroccan-terracotta rounded-full flex items-center justify-center text-white font-bold text-xl">
                                             2
                                         </div>
-                                        <h2 className="text-2xl font-bold text-gray-900">Tour Details</h2>
+                                        <h2 className="text-2xl font-bold text-gray-900">{t('booking.tourDetails')}</h2>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -217,11 +217,11 @@ const BookingPageV2 = () => {
                                         <div>
                                             <label className="block text-base font-semibold text-gray-800 mb-3">
                                                 <Calendar className="inline w-5 h-5 mr-2 text-moroccan-terracotta" />
-                                                Start Date
+                                                {t('booking.startDate')}
                                             </label>
                                             <input
                                                 type="date"
-                                                {...register('start_date', { required: 'Start date is required' })}
+                                                {...register('start_date', { required: t('booking.validation.startDateRequired') })}
                                                 min={new Date().toISOString().split('T')[0]}
                                                 className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-moroccan-terracotta focus:border-moroccan-terracotta transition-all text-lg hover:border-moroccan-terracotta"
                                             />
@@ -236,12 +236,12 @@ const BookingPageV2 = () => {
                                         <div>
                                             <label className="block text-base font-semibold text-gray-800 mb-3">
                                                 <Users className="inline w-5 h-5 mr-2 text-moroccan-blue" />
-                                                Number of Participants
+                                                {t('booking.numberOfParticipants')}
                                             </label>
                                             <input
                                                 type="number"
                                                 {...register('number_of_participants', {
-                                                    required: 'Number of participants is required',
+                                                    required: t('booking.validation.participantsRequired'),
                                                     min: { value: 1, message: 'At least 1 participant required' },
                                                     max: { value: selectedTour.max_participants, message: `Maximum ${selectedTour.max_participants} participants` }
                                                 })}
@@ -264,10 +264,10 @@ const BookingPageV2 = () => {
                                                 <Calendar className="w-6 h-6 text-moroccan-terracotta mt-1 flex-shrink-0" />
                                                 <div className="space-y-2">
                                                     <p className="text-base text-gray-800">
-                                                        <strong className="font-semibold">Tour Duration:</strong> {selectedTour.duration}
+                                                        <strong className="font-semibold">{t('booking.tourDuration')}:</strong> {selectedTour.duration}
                                                     </p>
                                                     <p className="text-base text-gray-800">
-                                                        <strong className="font-semibold">End Date:</strong>{' '}
+                                                        <strong className="font-semibold">{t('booking.endDate')}:</strong>{' '}
                                                         <span className="text-moroccan-terracotta font-medium">
                                                             {new Date(calculatedEndDate).toLocaleDateString('en-US', { 
                                                                 weekday: 'long', 
@@ -276,7 +276,7 @@ const BookingPageV2 = () => {
                                                                 day: 'numeric' 
                                                             })}
                                                         </span>
-                                                        <span className="text-sm text-gray-600 ml-2">(automatically calculated)</span>
+                                                        <span className="text-sm text-gray-600 ml-2">{t('booking.automaticallyCalculated')}</span>
                                                     </p>
                                                 </div>
                                             </div>
@@ -293,25 +293,25 @@ const BookingPageV2 = () => {
                                             <div className="w-12 h-12 bg-gradient-to-br from-moroccan-gold to-moroccan-terracotta rounded-full flex items-center justify-center text-white font-bold text-xl">
                                                 <DollarSign className="w-7 h-7" />
                                             </div>
-                                            <h2 className="text-2xl font-bold text-gray-900">Price Breakdown</h2>
+                                            <h2 className="text-2xl font-bold text-gray-900">{t('booking.priceBreakdown')}</h2>
                                         </div>
 
                                         <div className="space-y-4">
                                             <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                                                <span className="text-gray-700 font-medium">Pricing Tier:</span>
+                                                <span className="text-gray-700 font-medium">{t('booking.pricingTier')}:</span>
                                                 <span className="font-bold text-moroccan-terracotta text-lg">{priceInfo.pricing_tier}</span>
                                             </div>
                                             <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                                                <span className="text-gray-700 font-medium">Price per Person:</span>
+                                                <span className="text-gray-700 font-medium">{t('booking.pricePerPerson')}:</span>
                                                 <span className="font-bold text-gray-900 text-lg">€{priceInfo.price_per_person}</span>
                                             </div>
                                             <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                                                <span className="text-gray-700 font-medium">Number of Participants:</span>
+                                                <span className="text-gray-700 font-medium">{t('booking.numberOfParticipants')}:</span>
                                                 <span className="font-bold text-gray-900 text-lg">{priceInfo.participants}</span>
                                             </div>
                                             <div className="bg-gradient-to-r from-moroccan-sand to-moroccan-gold/30 p-5 rounded-xl mt-4">
                                                 <div className="flex justify-between items-center">
-                                                    <span className="text-xl font-bold text-gray-900">Total Price:</span>
+                                                    <span className="text-xl font-bold text-gray-900">{t('booking.totalPrice')}:</span>
                                                     <span className="text-3xl font-bold text-moroccan-terracotta">
                                                         €{priceInfo.total_price}
                                                     </span>
@@ -322,7 +322,7 @@ const BookingPageV2 = () => {
                                         {calculating && (
                                             <div className="mt-4 flex items-center gap-2 text-moroccan-terracotta">
                                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-moroccan-terracotta"></div>
-                                                <p className="text-sm font-medium">Calculating...</p>
+                                                <p className="text-sm font-medium">{t('booking.calculating')}</p>
                                             </div>
                                         )}
                                     </div>
@@ -335,20 +335,20 @@ const BookingPageV2 = () => {
                                     <div className="w-12 h-12 bg-gradient-to-br from-moroccan-gold to-moroccan-terracotta rounded-full flex items-center justify-center text-white font-bold text-xl">
                                         3
                                     </div>
-                                    <h2 className="text-2xl font-bold text-gray-900">Your Information</h2>
+                                    <h2 className="text-2xl font-bold text-gray-900">{t('booking.yourInformation')}</h2>
                                 </div>
 
                                 <div className="space-y-6">
                                     <div>
                                         <label className="block text-base font-semibold text-gray-800 mb-3">
                                             <User className="inline w-5 h-5 mr-2 text-moroccan-terracotta" />
-                                            Full Name *
+                                            {t('booking.fullName')} *
                                         </label>
                                         <input
                                             type="text"
-                                            {...register('customer_name', { required: 'Name is required' })}
+                                            {...register('customer_name', { required: t('booking.validation.nameRequired') })}
                                             className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-moroccan-terracotta focus:border-moroccan-terracotta transition-all text-lg hover:border-moroccan-terracotta"
-                                            placeholder="John Doe"
+                                            placeholder={t('booking.enterFullName')}
                                         />
                                         {errors.customer_name && (
                                             <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
@@ -360,16 +360,16 @@ const BookingPageV2 = () => {
                                     <div>
                                         <label className="block text-base font-semibold text-gray-800 mb-3">
                                             <Mail className="inline w-5 h-5 mr-2 text-moroccan-blue" />
-                                            Email *
+                                            {t('booking.emailAddress')} *
                                         </label>
                                         <input
                                             type="email"
                                             {...register('email', {
-                                                required: 'Email is required',
-                                                pattern: { value: /^\S+@\S+$/i, message: 'Invalid email address' }
+                                                required: t('booking.validation.emailRequired'),
+                                                pattern: { value: /^\S+@\S+$/i, message: t('booking.validation.emailInvalid') }
                                             })}
                                             className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-moroccan-terracotta focus:border-moroccan-terracotta transition-all text-lg hover:border-moroccan-terracotta"
-                                            placeholder="john@example.com"
+                                            placeholder={t('booking.enterEmail')}
                                         />
                                         {errors.email && (
                                             <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
@@ -381,25 +381,25 @@ const BookingPageV2 = () => {
                                     <div>
                                         <label className="block text-base font-semibold text-gray-800 mb-3">
                                             <Phone className="inline w-5 h-5 mr-2 text-moroccan-gold" />
-                                            Phone <span className="text-gray-500 text-sm font-normal">(optional)</span>
+                                            {t('booking.phoneNumber')}
                                         </label>
                                         <input
                                             type="tel"
                                             {...register('phone')}
                                             className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-moroccan-terracotta focus:border-moroccan-terracotta transition-all text-lg hover:border-moroccan-terracotta"
-                                            placeholder="+212 600 000 000"
+                                            placeholder={t('booking.enterPhone')}
                                         />
                                     </div>
 
                                     <div>
                                         <label className="block text-base font-semibold text-gray-800 mb-3">
-                                            Special Requests <span className="text-gray-500 text-sm font-normal">(optional)</span>
+                                            {t('booking.specialRequests')}
                                         </label>
                                         <textarea
                                             {...register('special_requests')}
                                             rows={4}
                                             className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-moroccan-terracotta focus:border-moroccan-terracotta transition-all text-lg hover:border-moroccan-terracotta resize-none"
-                                            placeholder="Any special requirements or requests..."
+                                            placeholder={t('booking.anySpecialRequests')}
                                         />
                                     </div>
                                 </div>
@@ -415,12 +415,12 @@ const BookingPageV2 = () => {
                                     {submitting ? (
                                         <>
                                             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                                            Processing Your Booking...
+                                            {t('booking.submittingBooking')}
                                         </>
                                     ) : (
                                         <>
                                             <DollarSign className="w-6 h-6" />
-                                            Confirm Booking
+                                            {t('booking.confirmBooking')}
                                         </>
                                     )}
                                 </button>

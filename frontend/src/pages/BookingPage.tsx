@@ -73,7 +73,7 @@ const BookingPage = () => {
       if (selectedTourId && startDate && endDate && participants && participants > 0) {
         try {
           setCalculating(true)
-          
+
           // Check availability first
           const availabilityResult = await bookingsService.checkAvailability({
             tour_id: selectedTourId,
@@ -82,7 +82,7 @@ const BookingPage = () => {
             number_of_participants: participants
           })
           setAvailability(availabilityResult)
-          
+
           // Calculate price if available
           if (availabilityResult.available) {
             const priceResult = await bookingsService.calculatePrice({
@@ -116,7 +116,7 @@ const BookingPage = () => {
   const onSubmit = async (data: BookingFormData) => {
     try {
       setSubmitting(true)
-      
+
       const bookingRequest: BookingRequest = {
         customer_name: data.customer_name,
         email: data.email,
@@ -128,9 +128,9 @@ const BookingPage = () => {
       }
 
       await bookingsService.createBooking(bookingRequest)
-      
+
       toast.success(t('booking.success'))
-      
+
       // Reset form
       setValue('customer_name', '')
       setValue('email', '')
@@ -138,7 +138,7 @@ const BookingPage = () => {
       setValue('start_date', '')
       setValue('end_date', '')
       setValue('number_of_participants', 1)
-      
+
     } catch (error) {
       console.error('Error creating booking:', error)
       toast.error(t('booking.error'))
@@ -348,49 +348,49 @@ const BookingPage = () => {
                 {/* Price Information */}
                 {calculating && (
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-sm text-gray-600">Calculating price...</div>
+                    <div className="text-sm text-gray-600">{t('booking.calculating')}</div>
                   </div>
                 )}
 
                 {priceInfo && availability?.available && (
                   <div className="bg-moroccan-sand p-4 rounded-lg">
-                    <h3 className="font-semibold text-gray-900 mb-3">Price Breakdown</h3>
+                    <h3 className="font-semibold text-gray-900 mb-3">{t('booking.priceBreakdown')}</h3>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span>Base price per day:</span>
+                        <span>{t('booking.basePricePerDay')}:</span>
                         <span>${priceInfo.base_price_per_person}</span>
                       </div>
                       {priceInfo.seasonal_multiplier !== 1 && (
                         <div className="flex justify-between">
-                          <span>Seasonal adjustment ({priceInfo.season_name}):</span>
+                          <span>{t('booking.seasonalAdjustment')} ({priceInfo.season_name}):</span>
                           <span>{priceInfo.seasonal_multiplier}x</span>
                         </div>
                       )}
                       {priceInfo.group_discount_percentage > 0 && (
                         <div className="flex justify-between text-green-600">
-                          <span>Group discount:</span>
+                          <span>{t('booking.groupDiscount')}:</span>
                           <span>-{priceInfo.group_discount_percentage}%</span>
                         </div>
                       )}
                       <div className="flex justify-between">
-                        <span>Final price per day:</span>
+                        <span>{t('booking.finalPricePerDay')}:</span>
                         <span className="font-semibold">${priceInfo.price_per_person}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Duration:</span>
-                        <span>{priceInfo.duration_days} day{priceInfo.duration_days > 1 ? 's' : ''}</span>
+                        <span>{t('booking.duration')}:</span>
+                        <span>{priceInfo.duration_days} {priceInfo.duration_days > 1 ? t('booking.days') : t('booking.day')}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Participants:</span>
+                        <span>{t('booking.participants')}:</span>
                         <span>{priceInfo.number_of_participants}</span>
                       </div>
                       <hr className="my-2" />
                       <div className="flex justify-between text-lg font-bold text-moroccan-terracotta">
-                        <span>Total Price:</span>
+                        <span>{t('booking.totalPrice')}:</span>
                         <span>${priceInfo.total_price}</span>
                       </div>
                       <div className="text-xs text-gray-600 mt-2">
-                        ${priceInfo.price_per_person} × {priceInfo.duration_days} days × {priceInfo.number_of_participants} participants
+                        ${priceInfo.price_per_person} × {priceInfo.duration_days} {t('booking.days')} × {priceInfo.number_of_participants} {t('booking.participants').toLowerCase()}
                       </div>
                     </div>
                   </div>
@@ -416,10 +416,10 @@ const BookingPage = () => {
                   disabled={submitting || loading || !availability?.available || calculating}
                   className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {submitting ? t('booking.form.submitting') : 
-                   calculating ? 'Calculating...' :
-                   !availability?.available ? 'Not Available' :
-                   `${t('booking.form.submit')} - $${priceInfo?.total_price || '0'}`}
+                  {submitting ? t('booking.form.submitting') :
+                    calculating ? 'Calculating...' :
+                      !availability?.available ? 'Not Available' :
+                        `${t('booking.form.submit')} - $${priceInfo?.total_price || '0'}`}
                 </button>
               </form>
             </div>

@@ -142,5 +142,16 @@ export const bookingsService = {
       console.error('Error marking booking as viewed:', error)
       throw new Error('Failed to mark booking as viewed')
     }
+  },
+
+  // Admin: Complete booking and send review request
+  async completeBooking(id: string): Promise<{ message: string; review_token: string }> {
+    try {
+      const response = await bookingsApi.post(`/bookings/${id}/complete`)
+      return response.data
+    } catch (error) {
+      console.error('Error completing booking:', error)
+      throw new Error('Failed to complete booking')
+    }
   }
 }

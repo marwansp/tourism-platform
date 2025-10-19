@@ -235,3 +235,111 @@ class TourTagResponse(BaseModel):
     def convert_uuid_to_string(cls, v):
         """Convert UUID to string for JSON serialization"""
         return str(v) if v else None
+
+
+# ============================================================================
+# MULTILINGUAL TRANSLATION SCHEMAS
+# ============================================================================
+
+class TourTranslationBase(BaseModel):
+    """Base schema for tour translations"""
+    language: str = Field(..., pattern="^(en|fr)$", description="Language code: en or fr")
+    title: str = Field(..., min_length=1, max_length=200, description="Translated tour title")
+    description: str = Field(..., min_length=10, description="Translated tour description")
+    location: str = Field(..., min_length=1, max_length=100, description="Translated location")
+    includes: Optional[str] = Field(None, description="Translated includes text")
+
+class TourTranslationCreate(TourTranslationBase):
+    """Schema for creating a tour translation"""
+    pass
+
+class TourTranslationUpdate(BaseModel):
+    """Schema for updating a tour translation"""
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
+    description: Optional[str] = Field(None, min_length=10)
+    location: Optional[str] = Field(None, min_length=1, max_length=100)
+    includes: Optional[str] = None
+
+class TourTranslationResponse(TourTranslationBase):
+    """Schema for tour translation response"""
+    id: str
+    tour_id: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+    
+    @validator('id', 'tour_id', pre=True)
+    def convert_uuid_to_string(cls, v):
+        """Convert UUID to string for JSON serialization"""
+        return str(v) if v else None
+
+class TourCreateWithTranslations(BaseModel):
+    """Schema for creating a tour with translations"""
+    # Non-translatable fields
+    price: Decimal = Field(..., gt=0)
+    duration: str = Field(..., min_length=1, max_length=50)
+    max_participants: int = Field(..., gt=0, le=50)
+    difficulty_level: str = Field(...)
+    available_dates: Optional[List[str]] = None
+    
+    # Translations for both languages
+    translations: dict = Field(..., description="Translations object with 'en' and 'fr' keys")
+    
+    # Images
+    images: Optional[List[TourImageCreate]] = None
+
+    @validator('translations')
+    def validate_translations(cls, v):
+        """Ensure both English and French translations are provided"""
+        if 'en' not in v or 'fr' not in v:
+            raise ValueError('Both English (en) and French (fr) translations are required')
+        
+        required_fields = ['title', 'description', 'location']
+        for lang in ['en', 'fr']:
+            for field in required_fields:
+                if field not in v[lang] or not v[lang][field]:
+                    raise ValueError(f'Missing required field "{field}" in {lang} translation')
+        
+        return v
+
+
+# ============================================================================
+# TOUR INFO SECTIONS SCHEMAS
+# ============================================================================
+
+class TourInfoSectionBase(BaseModel):
+    """Base schema for tour information sections"""
+    title_en: str = Field(..., min_length=1, max_length=200, description="Section title in English")
+    title_fr: str = Field(..., min_length=1, max_length=200, description="Section title in French")
+    content_en: str = Field(..., min_length=1, description="Section content in English (supports HTML)")
+    content_fr: str = Field(..., min_length=1, description="Section content in French (supports HTML)")
+    display_order: int = Field(0, ge=0, description="Display order (0-based)")
+
+class TourInfoSectionCreate(TourInfoSectionBase):
+    """Schema for creating a tour information section"""
+    pass
+
+class TourInfoSectionUpdate(BaseModel):
+    """Schema for updating a tour information section"""
+    title_en: Optional[str] = Field(None, min_length=1, max_length=200)
+    title_fr: Optional[str] = Field(None, min_length=1, max_length=200)
+    content_en: Optional[str] = Field(None, min_length=1)
+    content_fr: Optional[str] = Field(None, min_length=1)
+    display_order: Optional[int] = Field(None, ge=0)
+
+class TourInfoSectionResponse(TourInfoSectionBase):
+    """Schema for tour information section response"""
+    id: str
+    tour_id: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+    
+    @validator('id', 'tour_id', pre=True)
+    def convert_uuid_to_string(cls, v):
+        """Convert UUID to string for JSON serialization"""
+        return str(v) if v else None

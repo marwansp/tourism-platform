@@ -749,3 +749,259 @@ def remove_tag_from_tour(db: Session, tour_id: str, tag_id: str) -> bool:
     except (ValueError, SQLAlchemyError) as e:
         db.rollback()
         raise e
+
+
+# ============================================================================
+# MULTILINGUAL TRANSLATION CRUD OPERATIONS
+# ============================================================================
+
+def get_tour_translation(db: Session, tour_id: str, language: str):
+    """Get tour translation for specific language"""
+    from models import TourTranslation
+    return db.query(TourTranslation).filter(
+        TourTranslation.tour_id == tour_id,
+        TourTranslation.language == language
+    ).first()
+
+def get_tour_with_translation(db: Session, tour_id: str, language: str = "en"):
+    """Get tour with translation in specified language"""
+    from models import Tour, TourTranslation
+    import json
+    
+    tour = db.query(Tour).filter(Tour.id == tour_id).first()
+    if not tour:
+        return None
+    
+    translation = get_tour_translation(db, tour_id, language)
+    if translation:
+        # Merge translation fields into tour object
+        tour.title = translation.title
+        tour.description = translation.description
+        tour.location = translation.location
+        # Parse includes if it's a JSON string
+        if translation.includes:
+            try:
+                tour.includes = json.loads(translation.includes) if isinstance(translation.includes, str) else translation.includes
+            except:
+                tour.includes = [translation.includes]
+    
+    return tour
+
+def get_tours_with_language(db: Session, language: str = "en", skip: int = 0, limit: int = 100):
+    """Get all tours with translations in specified language"""
+    from models import Tour, TourTranslation
+    from sqlalchemy.orm import joinedload
+    import json
+    
+    # Get tours with their translations
+    tours = db.query(Tour).options(
+        joinedload(Tour.translations),
+        joinedload(Tour.images)
+    ).offset(skip).limit(limit).all()
+    
+    # Apply translations to each tour
+    result = []
+    for tour in tours:
+        translation = next((t for t in tour.translations if t.language == language), None)
+        if translation:
+            tour.title = translation.title
+            tour.description = translation.description
+            tour.location = translation.location
+            # Parse includes if it's a JSON string
+            if translation.includes:
+                try:
+                    tour.includes = json.loads(translation.includes) if isinstance(translation.includes, str) else translation.includes
+                except:
+                    tour.includes = [translation.includes]
+        result.append(tour)
+    
+    return result
+
+def create_tour_with_translations(db: Session, tour_data: dict, translations: dict):
+    """Create a new tour with translations"""
+    from models import Tour, TourTranslation, TourImage
+    import uuid
+    
+    # Create tour with non-translatable fields
+    db_tour = Tour(
+        id=uuid.uuid4(),
+        title=translations['en']['title'],  # Temporary, will be overridden by translation
+        description=translations['en']['description'],  # Temporary
+        location=translations['en']['location'],  # Temporary
+        includes=translations['en'].get('includes', ''),  # Temporary
+        base_price=tour_data['price'],
+        duration_days=tour_data.get('duration_days', 1),
+        duration_description=tour_data['duration'],
+        max_participants=tour_data['max_participants'],
+        min_participants=tour_data.get('min_participants', 1),
+        difficulty_level=tour_data['difficulty_level'],
+        available_dates=tour_data.get('available_dates'),
+        group_discount_threshold=tour_data.get('group_discount_threshold', 5),
+        group_discount_percentage=tour_data.get('group_discount_percentage', 0),
+        # Set legacy fields for backward compatibility
+        price=tour_data['price'],
+        duration=tour_data['duration']
+    )
+    
+    db.add(db_tour)
+    db.flush()  # Get the tour ID
+    
+    # Create translations for both languages
+    for lang, trans_data in translations.items():
+        db_translation = TourTranslation(
+            id=uuid.uuid4(),
+            tour_id=db_tour.id,
+            language=lang,
+            title=trans_data['title'],
+            description=trans_data['description'],
+            location=trans_data['location'],
+            includes=trans_data.get('includes', '')
+        )
+        db.add(db_translation)
+    
+    # Add images if provided
+    if 'images' in tour_data and tour_data['images']:
+        for img_data in tour_data['images']:
+            db_image = TourImage(
+                id=uuid.uuid4(),
+                tour_id=db_tour.id,
+                image_url=img_data['image_url'],
+                is_main=img_data.get('is_main', False),
+                display_order=img_data.get('display_order', 0),
+                alt_text=img_data.get('alt_text')
+            )
+            db.add(db_image)
+    
+    db.commit()
+    db.refresh(db_tour)
+    
+    return db_tour
+
+def update_tour_translations(db: Session, tour_id: str, translations: dict):
+    """Update tour translations"""
+    from models import TourTranslation
+    
+    for lang, trans_data in translations.items():
+        translation = get_tour_translation(db, tour_id, lang)
+        
+        if translation:
+            # Update existing translation
+            if 'title' in trans_data:
+                translation.title = trans_data['title']
+            if 'description' in trans_data:
+                translation.description = trans_data['description']
+            if 'location' in trans_data:
+                translation.location = trans_data['location']
+            if 'includes' in trans_data:
+                translation.includes = trans_data['includes']
+        else:
+            # Create new translation
+            db_translation = TourTranslation(
+                id=uuid.uuid4(),
+                tour_id=tour_id,
+                language=lang,
+                title=trans_data['title'],
+                description=trans_data['description'],
+                location=trans_data['location'],
+                includes=trans_data.get('includes', '')
+            )
+            db.add(db_translation)
+    
+    db.commit()
+    return True
+
+
+# ============================================================================
+# TOUR INFO SECTIONS CRUD OPERATIONS
+# ============================================================================
+
+def get_tour_info_sections(db: Session, tour_id: str):
+    """Get all information sections for a tour, ordered by display_order"""
+    from models import TourInfoSection
+    
+    return db.query(TourInfoSection).filter(
+        TourInfoSection.tour_id == tour_id
+    ).order_by(TourInfoSection.display_order).all()
+
+def get_tour_info_section(db: Session, section_id: str):
+    """Get a specific tour information section by ID"""
+    from models import TourInfoSection
+    
+    return db.query(TourInfoSection).filter(
+        TourInfoSection.id == section_id
+    ).first()
+
+def create_tour_info_section(db: Session, tour_id: str, section_data: dict):
+    """Create a new tour information section"""
+    from models import TourInfoSection
+    import uuid
+    
+    db_section = TourInfoSection(
+        id=uuid.uuid4(),
+        tour_id=tour_id,
+        title_en=section_data['title_en'],
+        title_fr=section_data['title_fr'],
+        content_en=section_data['content_en'],
+        content_fr=section_data['content_fr'],
+        display_order=section_data.get('display_order', 0)
+    )
+    
+    db.add(db_section)
+    db.commit()
+    db.refresh(db_section)
+    return db_section
+
+def update_tour_info_section(db: Session, section_id: str, section_data: dict):
+    """Update a tour information section"""
+    from models import TourInfoSection
+    
+    db_section = db.query(TourInfoSection).filter(
+        TourInfoSection.id == section_id
+    ).first()
+    
+    if not db_section:
+        return None
+    
+    # Update only provided fields
+    for field, value in section_data.items():
+        if value is not None and hasattr(db_section, field):
+            setattr(db_section, field, value)
+    
+    db.commit()
+    db.refresh(db_section)
+    return db_section
+
+def delete_tour_info_section(db: Session, section_id: str):
+    """Delete a tour information section"""
+    from models import TourInfoSection
+    
+    db_section = db.query(TourInfoSection).filter(
+        TourInfoSection.id == section_id
+    ).first()
+    
+    if db_section:
+        db.delete(db_section)
+        db.commit()
+        return True
+    return False
+
+def reorder_tour_info_sections(db: Session, tour_id: str, section_orders: list):
+    """Reorder tour information sections
+    
+    Args:
+        tour_id: Tour ID
+        section_orders: List of dicts with 'id' and 'display_order'
+    """
+    from models import TourInfoSection
+    
+    for order_data in section_orders:
+        section_id = order_data['id']
+        new_order = order_data['display_order']
+        
+        db.query(TourInfoSection).filter(
+            TourInfoSection.id == section_id,
+            TourInfoSection.tour_id == tour_id
+        ).update({'display_order': new_order})
+    
+    db.commit()
+    return True
