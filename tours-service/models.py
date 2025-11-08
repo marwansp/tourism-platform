@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, DECIMAL, DateTime, Integer, JSON, Boolean, ForeignKey, func, Date
+from sqlalchemy import Column, String, Text, DECIMAL, DateTime, Integer, JSON, Boolean, ForeignKey, func, Date, UniqueConstraint, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from database import Base
@@ -25,6 +25,7 @@ class Tour(Base):
     max_participants = Column(Integer, nullable=False, default=10)
     min_participants = Column(Integer, nullable=False, default=1)
     difficulty_level = Column(String(20), nullable=False, default='Easy')
+    tour_type = Column(String(20), nullable=False, default='tour', index=True)  # 'tour' or 'excursion'
     includes = Column(JSON, nullable=True)
     available_dates = Column(JSON, nullable=True)
     
@@ -48,7 +49,7 @@ class Tour(Base):
     images = relationship("TourImage", back_populates="tour", cascade="all, delete-orphan", order_by="TourImage.display_order")
     seasonal_prices = relationship("TourSeasonalPrice", back_populates="tour", cascade="all, delete-orphan")
     availability = relationship("TourAvailability", back_populates="tour", cascade="all, delete-orphan")
-    # translations relationship is defined in TourTranslation model using backref
+    translations = relationship("TourTranslation", back_populates="tour", cascade="all, delete-orphan")
     reviews = relationship("TourReview", back_populates="tour", cascade="all, delete-orphan", order_by="TourReview.created_at.desc()")
     group_pricing = relationship("TourGroupPricing", back_populates="tour", cascade="all, delete-orphan", order_by="TourGroupPricing.min_participants")
     tour_tags = relationship("TourTag", back_populates="tour", cascade="all, delete-orphan")
@@ -271,6 +272,7 @@ class Tag(Base):
     )
     name = Column(String(100), nullable=False, unique=True, index=True)
     icon = Column(String(50), nullable=True)  # Optional emoji or icon class
+    category = Column(String(20), nullable=False, default='included', index=True)  # 'included' or 'not_included'
     created_at = Column(
         DateTime(timezone=True), 
         server_default=func.now(),
@@ -281,7 +283,7 @@ class Tag(Base):
     tours = relationship("TourTag", back_populates="tag", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<Tag(id={self.id}, name='{self.name}')>"
+        return f"<Tag(id={self.id}, name='{self.name}', category='{self.category}')>"
 
 
 class TourTag(Base):
@@ -322,6 +324,51 @@ class TourTag(Base):
         return f"<TourTag(tour_id={self.tour_id}, tag_id={self.tag_id})>"
 
 
+class Language(Base):
+    """
+    SQLAlchemy model for languages table
+    Stores available languages for the multi-language system
+    """
+    __tablename__ = "languages"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        index=True
+    )
+    code = Column(String(2), unique=True, nullable=False, index=True)  # ISO 639-1 code (e.g., 'en', 'fr')
+    name = Column(String(100), nullable=False)  # English name (e.g., "Spanish")
+    native_name = Column(String(100), nullable=False)  # Native name (e.g., "Español")
+    flag_emoji = Column(String(10), nullable=False)  # Flag emoji (e.g., "🇪🇸")
+    is_active = Column(Boolean, default=True, nullable=False, index=True)
+    is_default = Column(Boolean, default=False, nullable=False)
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False
+    )
+
+    # Relationships
+    translations = relationship("TourTranslation", back_populates="language")
+
+    def __repr__(self):
+        return f"<Language(code='{self.code}', name='{self.name}', is_active={self.is_active})>"
+
+    def validate_code(self):
+        """
+        Validate that the language code is exactly 2 lowercase letters
+        """
+        if not self.code:
+            raise ValueError("Language code is required")
+        if len(self.code) != 2:
+            raise ValueError("Language code must be exactly 2 characters")
+        if not self.code.islower():
+            raise ValueError("Language code must be lowercase")
+        if not self.code.isalpha():
+            raise ValueError("Language code must contain only letters")
+
+
 class TourTranslation(Base):
     """
     SQLAlchemy model for tour translations (multilingual support)
@@ -341,7 +388,12 @@ class TourTranslation(Base):
         nullable=False,
         index=True
     )
-    language = Column(String(5), nullable=False, index=True)  # 'en' or 'fr'
+    language_code = Column(
+        String(2), 
+        ForeignKey('languages.code', ondelete='RESTRICT'),
+        nullable=False,
+        index=True
+    )
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=False)
     location = Column(String(100), nullable=False)
@@ -359,11 +411,18 @@ class TourTranslation(Base):
         nullable=False
     )
 
-    # Relationship back to tour
-    tour = relationship("Tour", backref="translations")
+    # Relationships
+    tour = relationship("Tour", back_populates="translations")
+    language = relationship("Language", back_populates="translations")
+
+    # Composite unique constraint and index
+    __table_args__ = (
+        UniqueConstraint('tour_id', 'language_code', name='uq_tour_language'),
+        Index('idx_tour_language', 'tour_id', 'language_code'),
+    )
 
     def __repr__(self):
-        return f"<TourTranslation(tour_id={self.tour_id}, language={self.language}, title={self.title})>"
+        return f"<TourTranslation(tour_id={self.tour_id}, language_code={self.language_code}, title={self.title})>"
 
 
 class TourInfoSection(Base):

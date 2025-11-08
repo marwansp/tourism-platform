@@ -19,7 +19,7 @@ interface BookingFormData {
 }
 
 const BookingPage = () => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [searchParams] = useSearchParams()
   const [tours, setTours] = useState<Tour[]>([])
   const [loading, setLoading] = useState(false)
@@ -46,7 +46,9 @@ const BookingPage = () => {
     const fetchTours = async () => {
       try {
         setLoading(true)
-        const toursData = await toursService.getAllTours()
+        // Extract language code from i18n (e.g., 'en-US' -> 'en')
+        const currentLang = i18n.language.split('-')[0].toLowerCase()
+        const toursData = await toursService.getAllTours(currentLang)
         setTours(toursData)
       } catch (error) {
         console.error('Error fetching tours:', error)
@@ -57,7 +59,7 @@ const BookingPage = () => {
     }
 
     fetchTours()
-  }, [])
+  }, [i18n.language])
 
   // Separate effect to handle tour pre-selection after tours are loaded
   useEffect(() => {

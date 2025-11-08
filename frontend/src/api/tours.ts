@@ -17,11 +17,15 @@ export interface Tour {
   location: string
   max_participants: number
   difficulty_level: string
+  tour_type: 'tour' | 'excursion'
   includes: string[]
   available_dates: string[]
   images: TourImage[]
   created_at: string
   updated_at: string
+  available_languages?: string[]
+  current_language?: string
+  is_fallback?: boolean
 }
 
 // V2 Types
@@ -38,6 +42,7 @@ export interface Tag {
   id: string
   name: string
   icon?: string
+  category: 'included' | 'not_included'
   created_at: string
 }
 
@@ -107,6 +112,36 @@ export interface TourInfoSectionUpdate {
   display_order?: number
 }
 
+export interface TourTranslationInput {
+  language_code: string
+  title: string
+  description: string
+  location?: string
+  itinerary?: string
+}
+
+export interface TourCreateDynamic {
+  price: number
+  duration: string
+  max_participants: number
+  difficulty_level: string
+  includes?: string[]
+  available_dates?: string[]
+  translations: TourTranslationInput[]
+  images?: TourImage[]
+}
+
+export interface TourUpdateDynamic {
+  price?: number
+  duration?: string
+  max_participants?: number
+  difficulty_level?: string
+  includes?: string[]
+  available_dates?: string[]
+  translations?: TourTranslationInput[]
+  images?: TourImage[]
+}
+
 export const toursService = {
   // Get all tours with language support
   async getAllTours(lang: string = 'en'): Promise<Tour[]> {
@@ -114,6 +149,21 @@ export const toursService = {
       const response = await toursApi.get('/tours', {
         params: { lang }
       })
+      return response.data
+    } catch (error) {
+      console.error('Error fetching tours:', error)
+      throw new Error('Failed to fetch tours')
+    }
+  },
+
+  // Get tours filtered by type
+  async getTours(lang: string = 'en', tourType?: 'tour' | 'excursion'): Promise<Tour[]> {
+    try {
+      const params: any = { lang }
+      if (tourType) {
+        params.tour_type = tourType
+      }
+      const response = await toursApi.get('/tours', { params })
       return response.data
     } catch (error) {
       console.error('Error fetching tours:', error)
@@ -129,6 +179,28 @@ export const toursService = {
     } catch (error) {
       console.error('Error creating multilingual tour:', error)
       throw new Error('Failed to create multilingual tour')
+    }
+  },
+
+  // Create tour with dynamic languages (v2)
+  async createTourDynamic(data: TourCreateDynamic): Promise<Tour> {
+    try {
+      const response = await toursApi.post('/tours/v2', data)
+      return response.data
+    } catch (error) {
+      console.error('Error creating tour with dynamic languages:', error)
+      throw new Error('Failed to create tour')
+    }
+  },
+
+  // Update tour with dynamic languages (v2)
+  async updateTourDynamic(tourId: string, data: TourUpdateDynamic): Promise<Tour> {
+    try {
+      const response = await toursApi.put(`/tours/v2/${tourId}`, data)
+      return response.data
+    } catch (error) {
+      console.error('Error updating tour with dynamic languages:', error)
+      throw new Error('Failed to update tour')
     }
   },
 

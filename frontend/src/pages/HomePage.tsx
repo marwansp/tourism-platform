@@ -10,11 +10,33 @@ const HomePage = () => {
   const { t, i18n } = useTranslation()
   const [featuredTours, setFeaturedTours] = useState<Tour[]>([])
   const [loading, setLoading] = useState(true)
+  const [currentHeroImage, setCurrentHeroImage] = useState(0)
+
+  // Hero images for slider
+  const heroImages = [
+    {
+      url: 'https://images.pexels.com/photos/943510/pexels-photo-943510.jpeg',
+      alt: 'Morocco Landscape'
+    },
+    {
+      url: 'https://images.pexels.com/photos/30710070/pexels-photo-30710070.jpeg',
+      alt: 'Moroccan Architecture'
+    },
+    {
+      url: 'https://images.pexels.com/photos/1703312/pexels-photo-1703312.jpeg',
+      alt: 'Desert Adventure'
+    },
+    {
+      url: 'https://images.pexels.com/photos/32880206/pexels-photo-32880206.jpeg',
+      alt: 'Moroccan Culture'
+    }
+  ]
 
   useEffect(() => {
     const fetchFeaturedTours = async () => {
       try {
-        const currentLang = i18n.language.startsWith('fr') ? 'fr' : 'en'
+        // Extract language code from i18n (e.g., 'en-US' -> 'en')
+        const currentLang = i18n.language.split('-')[0].toLowerCase()
         const tours = await toursService.getFeaturedTours(currentLang)
         setFeaturedTours(tours)
       } catch (error) {
@@ -26,6 +48,23 @@ const HomePage = () => {
 
     fetchFeaturedTours()
   }, [i18n.language])
+
+  // Auto-advance hero slider
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentHeroImage((prev) => (prev + 1) % heroImages.length)
+    }, 3000) // Change image every 3 seconds
+
+    return () => clearInterval(interval)
+  }, [heroImages.length])
+
+  const nextHeroImage = () => {
+    setCurrentHeroImage((prev) => (prev + 1) % heroImages.length)
+  }
+
+  const prevHeroImage = () => {
+    setCurrentHeroImage((prev) => (prev - 1 + heroImages.length) % heroImages.length)
+  }
 
   const features = [
     {
@@ -75,16 +114,59 @@ const HomePage = () => {
         structuredData={organizationSchema}
       />
 
-      {/* Hero Section */}
+      {/* Hero Section with Slider */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Image */}
+        {/* Background Image Slider */}
         <div className="absolute inset-0">
-          <img
-            src="https://i.ibb.co/RtCQ9F7/istockphoto-469810976-612x612.jpg"
-            alt="Morocco Desert Landscape"
-            className="w-full h-full object-cover"
-          />
+          {heroImages.map((image, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-1000 ${
+                index === currentHeroImage ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <img
+                src={image.url}
+                alt={image.alt}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ))}
           <div className="absolute inset-0 bg-black/40" />
+        </div>
+
+        {/* Slider Navigation */}
+        <button
+          onClick={prevHeroImage}
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full backdrop-blur-sm transition-all duration-200"
+          aria-label="Previous image"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button
+          onClick={nextHeroImage}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full backdrop-blur-sm transition-all duration-200"
+          aria-label="Next image"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        {/* Slider Indicators */}
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex space-x-2">
+          {heroImages.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentHeroImage(index)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                index === currentHeroImage ? 'bg-white w-8' : 'bg-white/50'
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
         </div>
 
         {/* Hero Content */}

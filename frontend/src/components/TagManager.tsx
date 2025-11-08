@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Tag as TagIcon, Plus, Edit2, Trash2, Save, X } from 'lucide-react'
 import { toursService, Tag, TourTag } from '../api/tours'
 import toast from 'react-hot-toast'
@@ -10,6 +11,7 @@ interface TagManagerProps {
 }
 
 const TagManager: React.FC<TagManagerProps> = ({ tourId, tourTitle, mode }) => {
+  const { t } = useTranslation()
   const [allTags, setAllTags] = useState<Tag[]>([])
   const [tourTags, setTourTags] = useState<TourTag[]>([])
   const [loading, setLoading] = useState(true)
@@ -17,7 +19,8 @@ const TagManager: React.FC<TagManagerProps> = ({ tourId, tourTitle, mode }) => {
   const [showAddForm, setShowAddForm] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
-    icon: ''
+    icon: '',
+    category: 'included' as 'included' | 'not_included'
   })
 
   useEffect(() => {
@@ -29,7 +32,7 @@ const TagManager: React.FC<TagManagerProps> = ({ tourId, tourTitle, mode }) => {
       setLoading(true)
       const tags = await toursService.getAllTags()
       setAllTags(tags)
-      
+
       if (mode === 'tour' && tourId) {
         const tTags = await toursService.getTourTags(tourId)
         setTourTags(tTags)
@@ -46,7 +49,7 @@ const TagManager: React.FC<TagManagerProps> = ({ tourId, tourTitle, mode }) => {
       await toursService.createTag(formData)
       toast.success('Tag created!')
       setShowAddForm(false)
-      setFormData({ name: '', icon: '' })
+      setFormData({ name: '', icon: '', category: 'included' })
       fetchData()
     } catch (error) {
       toast.error('Failed to create tag')
@@ -68,7 +71,7 @@ const TagManager: React.FC<TagManagerProps> = ({ tourId, tourTitle, mode }) => {
 
   const handleDeleteTag = async (tagId: string) => {
     if (!confirm('Delete this tag? It will be removed from all tours.')) return
-    
+
     try {
       await toursService.deleteTag(tagId)
       toast.success('Tag deleted!')
@@ -81,7 +84,7 @@ const TagManager: React.FC<TagManagerProps> = ({ tourId, tourTitle, mode }) => {
 
   const handleAddToTour = async (tagId: string) => {
     if (!tourId) return
-    
+
     try {
       await toursService.addTagToTour(tourId, tagId)
       toast.success('Tag added to tour!')
@@ -94,7 +97,7 @@ const TagManager: React.FC<TagManagerProps> = ({ tourId, tourTitle, mode }) => {
 
   const handleRemoveFromTour = async (tagId: string) => {
     if (!tourId) return
-    
+
     try {
       await toursService.removeTagFromTour(tourId, tagId)
       toast.success('Tag removed from tour!')
@@ -109,7 +112,8 @@ const TagManager: React.FC<TagManagerProps> = ({ tourId, tourTitle, mode }) => {
     setEditingId(tag.id)
     setFormData({
       name: tag.name,
-      icon: tag.icon || ''
+      icon: tag.icon || '',
+      category: tag.category || 'included'
     })
   }
 
@@ -143,7 +147,7 @@ const TagManager: React.FC<TagManagerProps> = ({ tourId, tourTitle, mode }) => {
       {showAddForm && mode === 'global' && (
         <div className="mb-4 p-4 bg-gray-50 rounded-lg border-2 border-moroccan-terracotta">
           <h4 className="font-medium mb-3">New Tag</h4>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-sm font-medium mb-1">Tag Name</label>
               <input
@@ -164,6 +168,17 @@ const TagManager: React.FC<TagManagerProps> = ({ tourId, tourTitle, mode }) => {
                 placeholder="🌐"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Category</label>
+              <select
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value as 'included' | 'not_included' })}
+                className="w-full px-3 py-2 border rounded-md"
+              >
+                <option value="included">✅ {t('tags.whatsIncluded')}</option>
+                <option value="not_included">❌ {t('tags.whatsNotIncluded')}</option>
+              </select>
+            </div>
           </div>
           <div className="flex gap-2 mt-3">
             <button onClick={handleAddTag} className="btn-primary text-sm">
@@ -177,105 +192,238 @@ const TagManager: React.FC<TagManagerProps> = ({ tourId, tourTitle, mode }) => {
       )}
 
       {/* Tags List */}
-      <div className="space-y-2">
+      <div className="space-y-4">
         {allTags.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             No tags available. Create one to get started!
           </div>
         ) : (
-          allTags.map((tag) => (
-            <div
-              key={tag.id}
-              className={`flex items-center justify-between p-3 rounded-lg border ${
-                mode === 'tour' && isTagInTour(tag.id)
-                  ? 'bg-moroccan-sand border-moroccan-terracotta'
-                  : 'bg-gray-50 border-gray-200'
-              }`}
-            >
-              <div className="flex items-center gap-3 flex-1">
-                {editingId === tag.id ? (
-                  <>
-                    <input
-                      type="text"
-                      value={formData.icon}
-                      onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                      className="w-16 px-2 py-1 border rounded text-center"
-                      placeholder="🌐"
-                    />
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="flex-1 px-2 py-1 border rounded"
-                    />
-                  </>
-                ) : (
-                  <>
-                    <span className="text-2xl">{tag.icon}</span>
-                    <span className="font-medium">{tag.name}</span>
-                  </>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                {mode === 'global' && (
-                  <>
-                    {editingId === tag.id ? (
-                      <>
-                        <button
-                          onClick={() => handleUpdateTag(tag.id)}
-                          className="text-green-600 hover:text-green-800"
-                        >
-                          <Save className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="text-gray-600 hover:text-gray-800"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => startEdit(tag)}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteTag(tag.id)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
-                  </>
-                )}
-
-                {mode === 'tour' && tourId && (
-                  <>
-                    {isTagInTour(tag.id) ? (
-                      <button
-                        onClick={() => handleRemoveFromTour(tag.id)}
-                        className="btn-secondary text-sm"
-                      >
-                        Remove
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleAddToTour(tag.id)}
-                        className="btn-primary text-sm"
-                      >
-                        Add
-                      </button>
-                    )}
-                  </>
+          <>
+            {/* What's Included Section */}
+            <div>
+              <h4 className="text-sm font-semibold text-green-700 mb-2 flex items-center gap-2">
+                <span>✅</span> {t('tags.whatsIncluded')}
+              </h4>
+              <div className="space-y-2">
+                {allTags.filter(tag => tag.category === 'included').map((tag) => (
+                  <div
+                    key={tag.id}
+                    className={`flex items-center justify-between p-3 rounded-lg border ${mode === 'tour' && isTagInTour(tag.id)
+                      ? 'bg-green-50 border-green-400'
+                      : 'bg-gray-50 border-gray-200'
+                      }`}
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      {editingId === tag.id ? (
+                        <>
+                          <input
+                            type="text"
+                            value={formData.icon}
+                            onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                            className="w-16 px-2 py-1 border rounded text-center"
+                            placeholder="🌐"
+                          />
+                          <input
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="flex-1 px-2 py-1 border rounded"
+                          />
+                          <select
+                            value={formData.category}
+                            onChange={(e) => setFormData({ ...formData, category: e.target.value as 'included' | 'not_included' })}
+                            className="px-2 py-1 border rounded text-sm"
+                          >
+                            <option value="included">✅ Included</option>
+                            <option value="not_included">❌ NOT Included</option>
+                          </select>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-2xl">{tag.icon}</span>
+                          <span className="font-medium">{tag.name}</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {mode === 'global' && (
+                        <>
+                          {editingId === tag.id ? (
+                            <>
+                              <button
+                                onClick={() => handleUpdateTag(tag.id)}
+                                className="text-green-600 hover:text-green-800"
+                              >
+                                <Save className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => setEditingId(null)}
+                                className="text-gray-600 hover:text-gray-800"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => startEdit(tag)}
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTag(tag.id)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                        </>
+                      )}
+                      {mode === 'tour' && tourId && (
+                        <>
+                          {isTagInTour(tag.id) ? (
+                            <button
+                              onClick={() => handleRemoveFromTour(tag.id)}
+                              className="btn-secondary text-sm"
+                            >
+                              Remove
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleAddToTour(tag.id)}
+                              className="btn-primary text-sm"
+                            >
+                              Add
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {allTags.filter(tag => tag.category === 'included').length === 0 && (
+                  <div className="text-sm text-gray-500 italic p-3 bg-gray-50 rounded">
+                    {t('tags.noIncludedTags')}
+                  </div>
                 )}
               </div>
             </div>
-          ))
+
+            {/* What's NOT Included Section */}
+            <div>
+              <h4 className="text-sm font-semibold text-red-700 mb-2 flex items-center gap-2">
+                <span>❌</span> {t('tags.whatsNotIncluded')}
+              </h4>
+              <div className="space-y-2">
+                {allTags.filter(tag => tag.category === 'not_included').map((tag) => (
+                  <div
+                    key={tag.id}
+                    className={`flex items-center justify-between p-3 rounded-lg border ${mode === 'tour' && isTagInTour(tag.id)
+                      ? 'bg-red-50 border-red-400'
+                      : 'bg-gray-50 border-gray-200'
+                      }`}
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      {editingId === tag.id ? (
+                        <>
+                          <input
+                            type="text"
+                            value={formData.icon}
+                            onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                            className="w-16 px-2 py-1 border rounded text-center"
+                            placeholder="🌐"
+                          />
+                          <input
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="flex-1 px-2 py-1 border rounded"
+                          />
+                          <select
+                            value={formData.category}
+                            onChange={(e) => setFormData({ ...formData, category: e.target.value as 'included' | 'not_included' })}
+                            className="px-2 py-1 border rounded text-sm"
+                          >
+                            <option value="included">✅ Included</option>
+                            <option value="not_included">❌ NOT Included</option>
+                          </select>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-2xl">{tag.icon}</span>
+                          <span className="font-medium">{tag.name}</span>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {mode === 'global' && (
+                        <>
+                          {editingId === tag.id ? (
+                            <>
+                              <button
+                                onClick={() => handleUpdateTag(tag.id)}
+                                className="text-green-600 hover:text-green-800"
+                              >
+                                <Save className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => setEditingId(null)}
+                                className="text-gray-600 hover:text-gray-800"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => startEdit(tag)}
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTag(tag.id)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                        </>
+                      )}
+                      {mode === 'tour' && tourId && (
+                        <>
+                          {isTagInTour(tag.id) ? (
+                            <button
+                              onClick={() => handleRemoveFromTour(tag.id)}
+                              className="btn-secondary text-sm"
+                            >
+                              Remove
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleAddToTour(tag.id)}
+                              className="btn-primary text-sm"
+                            >
+                              Add
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {allTags.filter(tag => tag.category === 'not_included').length === 0 && (
+                  <div className="text-sm text-gray-500 italic p-3 bg-gray-50 rounded">
+                    {t('tags.noNotIncludedTags')}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

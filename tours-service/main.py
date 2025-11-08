@@ -16,7 +16,9 @@ from schemas import (
     TagCreate, TagUpdate, TagResponse,
     TourTagCreate, TourTagResponse,
     TourCreateWithTranslations, TourTranslationResponse,
-    TourInfoSectionCreate, TourInfoSectionUpdate, TourInfoSectionResponse
+    TourInfoSectionCreate, TourInfoSectionUpdate, TourInfoSectionResponse,
+    LanguageCreate, LanguageUpdate, LanguageResponse,
+    TourCreateDynamic, TourUpdateDynamic, TourTranslationInput
 )
 from crud import (
     get_tours,
@@ -44,7 +46,13 @@ from crud import (
     # Tour-Tag associations
     add_tag_to_tour,
     get_tour_tags,
-    remove_tag_from_tour
+    remove_tag_from_tour,
+    # Languages
+    create_language,
+    update_language,
+    delete_language,
+    get_tour_available_languages,
+    get_tour_with_dynamic_language
 )
 
 # Configure logging
@@ -124,25 +132,26 @@ async def root():
 # Tours endpoints
 @app.get("/tours", response_model=List[TourResponse])
 async def list_tours(
-    lang: str = Query("en", pattern="^(en|fr)$", description="Language code: en or fr"),
+    lang: str = Query("en", pattern="^[a-z]{2}$", description="Language code (2 lowercase letters)"),
+    tour_type: str = Query(None, pattern="^(tour|excursion)$", description="Filter by tour type: 'tour' or 'excursion'"),
     skip: int = 0, 
     limit: int = 100, 
     db: Session = Depends(get_db)
 ):
-    """Get list of all tours with translations in specified language"""
+    """Get list of all tours with translations in specified language (with fallback to default)"""
     from crud import get_tours_with_language
-    tours = get_tours_with_language(db, language=lang, skip=skip, limit=limit)
+    tours = get_tours_with_language(db, language=lang, tour_type=tour_type, skip=skip, limit=limit)
     return tours
 
 @app.get("/tours/{tour_id}", response_model=TourDetailResponse)
 async def get_tour_details(
     tour_id: str,
-    lang: str = Query("en", pattern="^(en|fr)$", description="Language code: en or fr"),
+    lang: str = Query("en", description="Language code (e.g., en, fr, es, de)"),
     db: Session = Depends(get_db)
 ):
     """Get detailed information about a specific tour with reviews and translation"""
-    from crud import get_tour_with_translation
-    tour = get_tour_with_translation(db, tour_id=tour_id, language=lang)
+    from crud import get_tour_with_dynamic_language
+    tour = get_tour_with_dynamic_language(db, tour_id=tour_id, language=lang)
     if tour is None:
         raise HTTPException(status_code=404, detail="Tour not found")
     
@@ -167,16 +176,22 @@ async def get_tour_details(
         "images": tour.images,
         "reviews": reviews,
         "average_rating": rating_stats['average_rating'],
-        "total_reviews": rating_stats['total_reviews']
+        "total_reviews": rating_stats['total_reviews'],
+        "available_languages": tour.available_languages,
+        "current_language": tour.current_language,
+        "is_fallback": tour.is_fallback
     }
     
     return tour_dict
 
 @app.post("/tours", response_model=TourResponse)
 async def create_new_tour(tour: TourCreate, db: Session = Depends(get_db)):
-    """Create a new tour (admin only - legacy endpoint)"""
+    """Create a new tour (admin only - legacy endpoint without translations)"""
     try:
         return create_tour(db=db, tour=tour)
+    except ValueError as e:
+        logger.error(f"Validation error creating tour: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
     except SQLAlchemyError as e:
         logger.error(f"Error creating tour: {str(e)}")
         raise HTTPException(
@@ -217,12 +232,15 @@ async def create_multilingual_tour(tour_data: TourCreateWithTranslations, db: Se
 
 @app.put("/tours/{tour_id}", response_model=TourResponse)
 async def update_existing_tour(tour_id: str, tour: TourUpdate, db: Session = Depends(get_db)):
-    """Update an existing tour (admin only)"""
+    """Update an existing tour (admin only - legacy endpoint without translations)"""
     try:
         db_tour = update_tour(db=db, tour_id=tour_id, tour=tour)
         if db_tour is None:
             raise HTTPException(status_code=404, detail="Tour not found")
         return db_tour
+    except ValueError as e:
+        logger.error(f"Validation error updating tour {tour_id}: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
     except SQLAlchemyError as e:
         logger.error(f"Error updating tour {tour_id}: {str(e)}")
         raise HTTPException(
@@ -244,6 +262,96 @@ async def delete_existing_tour(tour_id: str, db: Session = Depends(get_db)):
             status_code=500,
             detail="Failed to delete tour. Please try again."
         )
+
+
+# ============================================================================
+# Dynamic Multi-Language Tour Endpoints
+# ============================================================================
+
+@app.post("/tours/v2", response_model=TourResponse)
+async def create_tour_with_dynamic_languages(tour_data: TourCreateDynamic, db: Session = Depends(get_db)):
+    """
+    Create a new tour with dynamic language support (admin only)
+    Accepts translations as an array of {language_code, title, description, location, itinerary}
+    """
+    try:
+        # Convert TourCreateDynamic to TourCreate for backward compatibility
+        tour_create = TourCreate(
+            title=tour_data.translations[0].title,  # Use first translation for legacy fields
+            description=tour_data.translations[0].description,
+            location=tour_data.translations[0].location or "",
+            price=tour_data.price,
+            duration=tour_data.duration,
+            max_participants=tour_data.max_participants,
+            difficulty_level=tour_data.difficulty_level,
+            includes=tour_data.includes,
+            available_dates=tour_data.available_dates,
+            images=tour_data.images
+        )
+        
+        # Convert translations to list of dicts
+        translations = [trans.dict() for trans in tour_data.translations]
+        
+        # Create tour with translations
+        db_tour = create_tour(db=db, tour=tour_create, translations=translations)
+        
+        # Return tour with first language translation
+        from crud import get_tour_with_dynamic_language
+        return get_tour_with_dynamic_language(db, str(db_tour.id), tour_data.translations[0].language_code)
+        
+    except ValueError as e:
+        logger.error(f"Validation error creating tour: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except SQLAlchemyError as e:
+        logger.error(f"Error creating tour: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create tour. Please try again.")
+
+
+@app.put("/tours/v2/{tour_id}", response_model=TourResponse)
+async def update_tour_with_dynamic_languages(
+    tour_id: str, 
+    tour_data: TourUpdateDynamic, 
+    db: Session = Depends(get_db)
+):
+    """
+    Update an existing tour with dynamic language support (admin only)
+    Accepts translations as an array of {language_code, title, description, location, itinerary}
+    """
+    try:
+        # Convert TourUpdateDynamic to TourUpdate for backward compatibility
+        tour_update = TourUpdate(
+            price=tour_data.price,
+            duration=tour_data.duration,
+            max_participants=tour_data.max_participants,
+            difficulty_level=tour_data.difficulty_level,
+            includes=tour_data.includes,
+            available_dates=tour_data.available_dates,
+            images=tour_data.images
+        )
+        
+        # Convert translations to list of dicts if provided
+        translations = None
+        if tour_data.translations is not None:
+            translations = [trans.dict() for trans in tour_data.translations]
+        
+        # Update tour with translations
+        db_tour = update_tour(db=db, tour_id=tour_id, tour=tour_update, translations=translations)
+        
+        if db_tour is None:
+            raise HTTPException(status_code=404, detail="Tour not found")
+        
+        # Return tour with first language translation if translations provided, otherwise default
+        from crud import get_tour_with_dynamic_language
+        lang_code = tour_data.translations[0].language_code if tour_data.translations else "en"
+        return get_tour_with_dynamic_language(db, tour_id, lang_code)
+        
+    except ValueError as e:
+        logger.error(f"Validation error updating tour {tour_id}: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except SQLAlchemyError as e:
+        logger.error(f"Error updating tour {tour_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update tour. Please try again.")
+
 
 # Pricing and availability endpoints
 @app.get("/tours/{tour_id}/seasonal-pricing")
@@ -649,6 +757,197 @@ async def reorder_tour_info_sections_endpoint(
     except Exception as e:
         logger.error(f"Error reordering tour info sections: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to reorder tour information sections")
+
+
+# ============================================================================
+# LANGUAGE MANAGEMENT ENDPOINTS
+# ============================================================================
+
+@app.get("/languages", response_model=List[LanguageResponse])
+async def get_languages(
+    active_only: bool = Query(True, description="Filter to only active languages"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get all languages, optionally filtered by active status.
+    Returns languages sorted by is_default desc, name asc.
+    """
+    try:
+        from crud import get_all_languages
+        languages = get_all_languages(db, active_only=active_only)
+        return languages
+    except Exception as e:
+        logger.error(f"Error fetching languages: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch languages")
+
+
+@app.post("/languages", response_model=LanguageResponse, status_code=201)
+async def create_new_language(
+    language: LanguageCreate,
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new language (Admin only).
+    
+    Validates:
+    - Code is exactly 2 lowercase letters
+    - Code is unique
+    - Required fields are provided (name, native_name, flag_emoji)
+    
+    Returns 201 Created with the language object.
+    """
+    try:
+        language_data = language.dict()
+        db_language = create_language(db, language_data)
+        return db_language
+    except ValueError as e:
+        # Validation errors (duplicate code, invalid format, missing fields)
+        logger.error(f"Validation error creating language: {str(e)}")
+        
+        # Return 409 Conflict for duplicate code
+        if "already exists" in str(e):
+            raise HTTPException(status_code=409, detail=str(e))
+        
+        # Return 400 Bad Request for other validation errors
+        raise HTTPException(status_code=400, detail=str(e))
+    except SQLAlchemyError as e:
+        logger.error(f"Database error creating language: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create language")
+    except Exception as e:
+        logger.error(f"Unexpected error creating language: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create language")
+
+
+@app.put("/languages/{language_id}", response_model=LanguageResponse)
+async def update_existing_language(
+    language_id: str,
+    language: LanguageUpdate,
+    db: Session = Depends(get_db)
+):
+    """
+    Update an existing language (Admin only).
+    
+    Validates:
+    - Cannot change code after creation
+    - Cannot deactivate default language
+    - Only one language can be default at a time
+    
+    Returns 200 OK with the updated language object.
+    """
+    try:
+        language_data = language.dict(exclude_unset=True)
+        db_language = update_language(db, language_id, language_data)
+        
+        if not db_language:
+            raise HTTPException(status_code=404, detail="Language not found")
+        
+        return db_language
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 404)
+        raise
+    except ValueError as e:
+        # Validation errors (cannot change code, cannot deactivate default, etc.)
+        # Also catches invalid UUID format
+        logger.error(f"Validation error updating language: {str(e)}")
+        
+        # Check if it's a UUID format error
+        if "badly formed" in str(e) or "invalid" in str(e).lower():
+            raise HTTPException(status_code=400, detail=str(e))
+        
+        raise HTTPException(status_code=400, detail=str(e))
+    except SQLAlchemyError as e:
+        logger.error(f"Database error updating language: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update language")
+    except Exception as e:
+        logger.error(f"Unexpected error updating language: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update language")
+
+
+@app.delete("/languages/{language_id}", status_code=204)
+async def delete_existing_language(
+    language_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Delete a language (Admin only).
+    
+    Validates:
+    - Cannot delete default language (returns 400 Bad Request)
+    - Cannot delete if tours have translations in this language (returns 409 Conflict)
+    
+    Returns 204 No Content on success.
+    """
+    try:
+        success = delete_language(db, language_id)
+        
+        if not success:
+            raise HTTPException(status_code=404, detail="Language not found")
+        
+        return None  # 204 No Content
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 404)
+        raise
+    except ValueError as e:
+        # Validation errors (cannot delete default, has translations, etc.)
+        error_msg = str(e)
+        logger.error(f"Validation error deleting language: {error_msg}")
+        
+        # Check if it's a "has translations" error (return 409 Conflict)
+        if "have translations" in error_msg or "tour(s)" in error_msg:
+            raise HTTPException(status_code=409, detail=error_msg)
+        
+        # Check if it's a "default language" error (return 400 Bad Request)
+        if "default language" in error_msg:
+            raise HTTPException(status_code=400, detail=error_msg)
+        
+        # Other validation errors (like invalid UUID)
+        raise HTTPException(status_code=400, detail=error_msg)
+    except SQLAlchemyError as e:
+        error_msg = str(e)
+        logger.error(f"Database error deleting language: {error_msg}")
+        
+        # Check if it's a foreign key constraint violation
+        if "foreign key constraint" in error_msg.lower() or "violates foreign key" in error_msg.lower():
+            raise HTTPException(
+                status_code=409, 
+                detail="Cannot delete language. Tours have translations in this language."
+            )
+        
+        raise HTTPException(status_code=500, detail="Failed to delete language")
+    except Exception as e:
+        logger.error(f"Unexpected error deleting language: {type(e).__name__}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete language: {str(e)}")
+
+
+@app.get("/tours/{tour_id}/available-languages")
+async def get_tour_available_languages_endpoint(
+    tour_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Get list of language codes that have translations for a specific tour.
+    
+    Returns an array of language codes (e.g., ['en', 'fr', 'es']).
+    """
+    try:
+        # Verify tour exists
+        tour = get_tour_by_id(db, tour_id)
+        if not tour:
+            raise HTTPException(status_code=404, detail="Tour not found")
+        
+        # Get available languages for this tour
+        available_languages = get_tour_available_languages(db, tour_id)
+        
+        return {
+            "tour_id": tour_id,
+            "available_languages": available_languages
+        }
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 404)
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching available languages for tour {tour_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch available languages")
 
 
 if __name__ == "__main__":

@@ -6,11 +6,13 @@ import WhatsAppButton from './components/WhatsAppButton'
 import ScrollToTop from './components/ScrollToTop'
 import HomePage from './pages/HomePage'
 import ToursPage from './pages/ToursPage'
+import ExcursionsPage from './pages/ExcursionsPage'
 import TourDetailsPage from './pages/TourDetailsPage'
 import BookingPageV2 from './pages/BookingPageV2'
 import GalleryPage from './pages/GalleryPage'
 import ContactPage from './pages/ContactPage'
 import AdminPage from './pages/AdminPage'
+import EditTourPage from './pages/EditTourPage'
 import ReviewPage from './pages/ReviewPage'
 import { useTranslation } from 'react-i18next'
 
@@ -36,11 +38,13 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/tours" element={<ToursPage />} />
+          <Route path="/excursions" element={<ExcursionsPage />} />
           <Route path="/tours/:id" element={<TourDetailsPage />} />
           <Route path="/booking" element={<BookingPageV2 />} />
           <Route path="/gallery" element={<GalleryPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin/tours/:tourId/edit" element={<EditTourPage />} />
           <Route path="/review/:token" element={<ReviewPage />} />
         </Routes>
       </main>

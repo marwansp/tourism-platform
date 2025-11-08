@@ -6,6 +6,7 @@
   "navbar": {
     "home": "Home",
     "tours": "Tours",
+    "excursions": "Excursions",
     "gallery": "Gallery",
     "booking": "Booking",
     "contact": "Contact",
@@ -48,7 +49,8 @@
     "perDay": "per day",
     "loading": "Loading tours...",
     "error": "Failed to load tours. Please try again.",
-    "noTours": "No tours available at the moment."
+    "noTours": "No tours available at the moment.",
+    "translatedFromEnglish": "Translated from English"
   },
   "tourDetails": {
     "bookTour": "Book This Tour",
@@ -72,7 +74,9 @@
     "aboutThisTour": "About This Tour",
     "from": "From",
     "customerReviews": "Customer Reviews",
-    "noReviews": "No reviews yet. Be the first to review this tour!"
+    "noReviews": "No reviews yet. Be the first to review this tour!",
+    "translatedFromEnglish": "This tour is displayed in English as a translation is not available in your selected language.",
+    "availableIn": "Available in"
   },
   "booking": {
     "title": "Book Your Adventure",
@@ -197,6 +201,26 @@
     "followUs": "Follow Us",
     "rights": "All rights reserved."
   },
+  "excursions": {
+    "title": "Day Excursions",
+    "description": "Discover amazing day trips and excursions in Morocco",
+    "heroTitle": "Day Excursions",
+    "heroSubtitle": "Explore Morocco with our carefully curated day trips and short excursions",
+    "loading": "Loading excursions...",
+    "error": "Failed to load excursions",
+    "noExcursions": "No excursions available at the moment.",
+    "checkBackLater": "Please check back later for new day trips!",
+    "availableExcursions": "Available Excursions",
+    "excursion": "excursion",
+    "excursions": "excursions",
+    "whyChooseTitle": "Why Choose Our Excursions?",
+    "flexibleTitle": "Flexible Duration",
+    "flexibleDesc": "Perfect for travelers with limited time",
+    "affordableTitle": "Affordable Prices",
+    "affordableDesc": "Great value day trips for all budgets",
+    "focusedTitle": "Focused Experience",
+    "focusedDesc": "Discover specific attractions in depth"
+  },
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong",
@@ -205,5 +229,11 @@
     "back": "Back",
     "next": "Next",
     "previous": "Previous"
+  },
+  "tags": {
+    "whatsIncluded": "What's Included",
+    "whatsNotIncluded": "What's NOT Included",
+    "noIncludedTags": "No \"What's Included\" tags yet",
+    "noNotIncludedTags": "No \"What's NOT Included\" tags yet"
   }
 }

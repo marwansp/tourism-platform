@@ -1,0 +1,213 @@
+Perfect — let’s break this down microservice by microservice, very detailed, so you have a clear blueprint to start building.
+We will keep this Auth-free version as we discussed, but leave hooks so you can add authentication later if needed.
+
+🟩 Detailed Specifications for Each Microservice
+1️⃣ Frontend Service
+
+Tech: React + TailwindCSS, deployed via Nginx (Docker container)
+
+Responsibilities:
+
+Display all pages (Home, Tours, Booking, Contact)
+
+Send API requests to other microservices
+
+Provide a simple and clean UI optimized for tourists
+
+Multilingual support: EN + FR (optional Arabic later)
+
+Pages to Include:
+
+/ – Home page (hero banner, intro, featured tours)
+
+/tours – List of tours (fetched from Tours service)
+
+/tours/:id – Tour details
+
+/booking – Booking form
+
+/contact – Contact form (calls Messaging service)
+
+/gallery – Show photos from Media service
+
+2️⃣ Tours & Packages Service
+
+Tech: FastAPI + PostgreSQL (or Cassandra if you prefer NoSQL)
+
+Responsibilities:
+
+Manage tours (CRUD)
+
+Serve public tour data to the frontend
+
+Endpoints:
+
+GET /tours → list all tours
+
+GET /tours/{id} → get tour details
+
+POST /tours → add a new tour (admin use only for now — we can protect with simple API key header)
+
+PUT /tours/{id} → edit a tour
+
+DELETE /tours/{id} → delete a tour
+
+Database Table:
+
+Column	Type	Notes
+id	UUID	Primary key
+title	TEXT	Tour title
+description	TEXT	Detailed text
+price	DECIMAL	Price per person
+duration	TEXT	"3 days / 2 nights"
+image_url	TEXT	Link to image from Media service
+3️⃣ Booking & Reservation Service
+
+Tech: FastAPI + PostgreSQL
+
+Responsibilities:
+
+Handle booking requests from website
+
+Store customer data and tour selection
+
+Call Messaging service to send notification
+
+Endpoints:
+
+POST /bookings → create new booking
+
+GET /bookings → list bookings (optional admin dashboard)
+
+GET /bookings/{id} → get booking details
+
+PUT /bookings/{id} → update status (pending → confirmed)
+
+DELETE /bookings/{id} → delete booking (admin only)
+
+Booking Flow:
+
+Customer submits form on frontend
+
+Booking service saves it in DB
+
+Booking service triggers notification (email or WhatsApp)
+
+Database Table:
+
+Column	Type	Notes
+id	UUID	Primary key
+customer_name	TEXT	
+email	TEXT	
+phone	TEXT	Optional
+tour_id	UUID	FK → Tours table
+date	TIMESTAMP	Travel date
+status	TEXT	pending, confirmed
+4️⃣ Messaging & Notification Service
+
+Tech: FastAPI + SMTP (Gmail/SendGrid) + Optional Twilio (WhatsApp)
+
+Responsibilities:
+
+Send booking confirmation email to customer
+
+Notify admin of new booking (email or WhatsApp)
+
+Log all notifications sent
+
+Endpoints:
+
+POST /notify/email → send email
+
+POST /notify/whatsapp → send WhatsApp (optional)
+
+GET /notifications → view sent notifications (for debugging)
+
+Email Template Example:
+
+Subject: New Booking Request
+Body:
+Hello [Admin],
+You have a new booking request for [Tour Name] on [Date].
+Customer: [Name] - [Email].
+
+5️⃣ Media & Gallery Service
+
+Tech: FastAPI + MinIO / Local storage + S3-compatible API
+
+Responsibilities:
+
+Manage all media assets (vehicle photos, destinations)
+
+Provide URLs for frontend
+
+Endpoints:
+
+GET /gallery → list all images
+
+POST /gallery/upload → upload new image (admin use only)
+
+DELETE /gallery/{id} → delete image (admin use only)
+
+Database Table:
+
+Column	Type	Notes
+id	UUID	Primary key
+url	TEXT	Image path
+caption	TEXT	Optional
+6️⃣ (Optional) AI Travel Assistant Service
+
+Tech: FastAPI + Llama 3 via Ollama (local)
+
+Responsibilities:
+
+Answer basic questions about tours, pricing, weather, best routes
+
+Recommend itineraries based on number of days and city
+
+Return JSON response with recommended tour IDs (so frontend can link)
+
+Endpoint:
+
+POST /ask
+Request:
+
+{ "question": "What can I do in Marrakech in 2 days?" }
+
+
+Response:
+
+{
+  "answer": "You can take our Marrakech City Tour on day 1 and Essaouira day trip on day 2.",
+  "suggested_tours": ["tour_001", "tour_002"]
+}
+
+🔄 Inter-Service Communication
+From → To	Purpose
+Frontend → Tours Service	Load list of tours
+Frontend → Booking Service	Submit booking request
+Booking Service → Messaging Service	Trigger email/WhatsApp notification
+Frontend → Media Service	Load gallery images
+Frontend → AI Service (Optional)	Get tour recommendations
+📡 Port Convention
+Service	Port
+Frontend (React)	3000
+Tours & Packages	8010
+Booking & Reservation	8020
+Messaging & Notification	8030
+Media & Gallery	8040
+AI Assistant	8050 (optional)
+
+This setup is fully modular and can run via docker-compose with separate containers for each service.
+
+✅ Benefits of This Detailed Design
+
+Clear separation of concerns – each microservice does one job well
+
+Easier maintenance – can update booking logic without touching tours
+
+Scalable – later you can add authentication, payments, or AI with minimal disruption
+
+Fast MVP – focus on Tours + Booking + Notifications first to start receiving customers
+
+Would you like me to draw a visual architecture diagram (services, ports, arrows) for you to pass to your developers (or even to an AI agent like O3/Lumma) so they can scaffold the services automatically? This will make the structure crystal clear before development.

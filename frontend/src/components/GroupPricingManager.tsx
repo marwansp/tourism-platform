@@ -203,7 +203,7 @@ const GroupPricingManager: React.FC<GroupPricingManagerProps> = ({ tourId, tourT
                       />
                     ) : (
                       <span className="text-moroccan-terracotta font-semibold">
-                        €{pricing.price_per_person}
+                        €{Number.isInteger(Number(pricing.price_per_person)) ? Math.floor(Number(pricing.price_per_person)) : Number(pricing.price_per_person).toFixed(2)}
                       </span>
                     )}
                   </td>

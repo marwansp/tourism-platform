@@ -15,7 +15,8 @@ const ToursPage = () => {
       try {
         setLoading(true)
         setError(null)
-        const currentLang = i18n.language.startsWith('fr') ? 'fr' : 'en'
+        // Extract language code from i18n (e.g., 'en-US' -> 'en')
+        const currentLang = i18n.language.split('-')[0].toLowerCase()
         const toursData = await toursService.getAllTours(currentLang)
         setTours(toursData)
       } catch (err) {

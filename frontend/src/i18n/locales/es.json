@@ -1,0 +1,239 @@
+{
+  "meta": {
+    "title": "Turismo de Marruecos - Descubre la Magia de Marruecos",
+    "description": "Descubre Marruecos con nuestros tours auténticos. Experimenta el Desierto del Sahara, las Montañas del Atlas y ciudades históricas. ¡Reserva tu aventura hoy!"
+  },
+  "navbar": {
+    "home": "Inicio",
+    "tours": "Tours",
+    "excursions": "Excursiones",
+    "gallery": "Galería",
+    "booking": "Reservas",
+    "contact": "Contacto",
+    "language": "Idioma"
+  },
+  "home": {
+    "hero": {
+      "title": "Descubre la Magia de Marruecos",
+      "subtitle": "Experimenta aventuras auténticas en el Desierto del Sahara, las Montañas del Atlas y las históricas ciudades imperiales",
+      "cta": "Explora Nuestros Tours"
+    },
+    "featured": {
+      "title": "Tours Destacados",
+      "subtitle": "Experiencias seleccionadas que muestran lo mejor de Marruecos"
+    },
+    "why": {
+      "title": "Por Qué Elegirnos",
+      "authentic": {
+        "title": "Experiencias Auténticas",
+        "description": "Guías locales e inmersión cultural genuina"
+      },
+      "comfort": {
+        "title": "Viaje Cómodo",
+        "description": "Vehículos modernos y alojamientos de calidad"
+      },
+      "support": {
+        "title": "Soporte 24/7",
+        "description": "Siempre aquí para ayudarte durante tu viaje"
+      }
+    }
+  },
+  "tours": {
+    "title": "Nuestros Tours",
+    "subtitle": "Elige entre nuestras aventuras marroquíes cuidadosamente elaboradas",
+    "viewDetails": "Ver Detalles",
+    "bookNow": "Reservar Ahora",
+    "duration": "Duración",
+    "price": "Precio",
+    "perPerson": "por persona",
+    "perDay": "por día",
+    "loading": "Cargando tours...",
+    "error": "Error al cargar los tours. Por favor, inténtalo de nuevo.",
+    "noTours": "No hay tours disponibles en este momento.",
+    "translatedFromEnglish": "Traducido del inglés"
+  },
+  "tourDetails": {
+    "bookTour": "Reservar Este Tour",
+    "duration": "Duración",
+    "price": "Precio",
+    "perPerson": "por persona",
+    "perDay": "por día",
+    "loading": "Cargando detalles del tour...",
+    "error": "Tour no encontrado o error al cargar.",
+    "backToTours": "Volver a Tours",
+    "readyToBook": "¿Listo para Reservar?",
+    "bookingDescription": "Asegura tu lugar en esta increíble aventura. Te contactaremos para confirmar todos los detalles.",
+    "questions": "¿Preguntas?",
+    "questionsDescription": "¿Necesitas más información o tienes solicitudes especiales? ¡Estamos aquí para ayudarte!",
+    "contactUs": "Contáctanos →",
+    "groupPricing": "Precios de Grupo",
+    "betterPricesForGroups": "¡Mejores precios para grupos más grandes!",
+    "person": "persona",
+    "people": "personas",
+    "perPersonShort": "/persona",
+    "aboutThisTour": "Acerca de Este Tour",
+    "from": "Desde",
+    "customerReviews": "Opiniones de Clientes",
+    "noReviews": "Aún no hay opiniones. ¡Sé el primero en opinar sobre este tour!",
+    "translatedFromEnglish": "Este tour se muestra en inglés ya que no hay traducción disponible en tu idioma seleccionado.",
+    "availableIn": "Disponible en"
+  },
+  "booking": {
+    "title": "Reserva Tu Aventura",
+    "subtitle": "Completa tus datos y te contactaremos para confirmar tu reserva",
+    "form": {
+      "name": "Nombre Completo",
+      "namePlaceholder": "Ingresa tu nombre completo",
+      "email": "Correo Electrónico",
+      "emailPlaceholder": "Ingresa tu correo electrónico",
+      "phone": "Número de Teléfono",
+      "phonePlaceholder": "Ingresa tu número de teléfono (opcional)",
+      "tourId": "Seleccionar Tour",
+      "tourPlaceholder": "Elige un tour",
+      "participants": "Número de Participantes",
+      "startDate": "Fecha de Inicio",
+      "endDate": "Fecha de Fin",
+      "travelDate": "Fecha de Viaje",
+      "submit": "Enviar Reserva",
+      "submitting": "Enviando..."
+    },
+    "validation": {
+      "nameRequired": "El nombre es obligatorio",
+      "nameMin": "El nombre debe tener al menos 2 caracteres",
+      "emailRequired": "El correo electrónico es obligatorio",
+      "emailInvalid": "Por favor ingresa un correo electrónico válido",
+      "tourRequired": "Por favor selecciona un tour",
+      "participantsRequired": "El número de participantes es obligatorio",
+      "participantsMin": "Se requiere al menos 1 participante",
+      "participantsMax": "Máximo 50 participantes permitidos",
+      "startDateRequired": "La fecha de inicio es obligatoria",
+      "endDateRequired": "La fecha de fin es obligatoria",
+      "endDateAfterStart": "La fecha de fin debe ser posterior a la fecha de inicio",
+      "dateRequired": "La fecha de viaje es obligatoria",
+      "dateFuture": "La fecha de viaje debe ser en el futuro"
+    },
+    "calculating": "Calculando precio...",
+    "priceBreakdown": "Desglose de Precio",
+    "basePricePerDay": "Precio base por día",
+    "seasonalAdjustment": "Ajuste estacional",
+    "groupDiscount": "Descuento de grupo",
+    "finalPricePerDay": "Precio final por día",
+    "duration": "Duración",
+    "day": "día",
+    "days": "días",
+    "participants": "Participantes",
+    "totalPrice": "Precio Total",
+    "bookYourAdventure": "Reserva Tu",
+    "moroccanAdventure": "Aventura Marroquí",
+    "completeForm": "Completa el formulario a continuación para reservar tu viaje inolvidable por Marruecos",
+    "selectYourTour": "Selecciona Tu Tour",
+    "chooseAdventure": "Elige tu aventura...",
+    "tourDetails": "Detalles del Tour",
+    "startDate": "Fecha de Inicio",
+    "numberOfParticipants": "Número de Participantes",
+    "tourDuration": "Duración del Tour",
+    "endDate": "Fecha de Fin",
+    "automaticallyCalculated": "(calculado automáticamente)",
+    "pricingTier": "Nivel de Precio",
+    "pricePerPerson": "Precio por Persona",
+    "numberOfPeople": "Número de Personas",
+    "subtotal": "Subtotal",
+    "yourInformation": "Tu Información",
+    "fullName": "Nombre Completo",
+    "enterFullName": "Ingresa tu nombre completo",
+    "emailAddress": "Correo Electrónico",
+    "enterEmail": "Ingresa tu correo electrónico",
+    "phoneNumber": "Número de Teléfono (Opcional)",
+    "enterPhone": "Ingresa tu número de teléfono",
+    "specialRequests": "Solicitudes Especiales (Opcional)",
+    "anySpecialRequests": "¿Alguna solicitud especial o requisito dietético?",
+    "confirmBooking": "Confirmar Reserva",
+    "submittingBooking": "Enviando Reserva...",
+    "loading": "Cargando...",
+    "success": "¡Reserva enviada con éxito! Te contactaremos pronto para confirmar tu aventura.",
+    "error": "Error al enviar la reserva. Por favor, inténtalo de nuevo."
+  },
+  "gallery": {
+    "title": "Galería",
+    "subtitle": "Vislumbres de los hermosos destinos que explorarás",
+    "loading": "Cargando galería...",
+    "error": "Error al cargar las imágenes de la galería.",
+    "noImages": "No hay imágenes disponibles en este momento."
+  },
+  "contact": {
+    "title": "Contáctanos",
+    "subtitle": "Ponte en contacto con nosotros para cualquier pregunta o solicitud especial",
+    "info": {
+      "title": "Información de Contacto",
+      "address": "Marrakech, Marruecos",
+      "phone": "+212 XXX-XXXXXX",
+      "email": "info@moroccotourism.com",
+      "hours": "Disponible 24/7"
+    },
+    "form": {
+      "title": "Envíanos un Mensaje",
+      "name": "Tu Nombre",
+      "namePlaceholder": "Ingresa tu nombre",
+      "email": "Tu Correo",
+      "emailPlaceholder": "Ingresa tu correo",
+      "subject": "Asunto",
+      "subjectPlaceholder": "¿De qué se trata?",
+      "message": "Mensaje",
+      "messagePlaceholder": "Cuéntanos cómo podemos ayudarte...",
+      "submit": "Enviar Mensaje",
+      "submitting": "Enviando..."
+    },
+    "validation": {
+      "nameRequired": "El nombre es obligatorio",
+      "emailRequired": "El correo electrónico es obligatorio",
+      "emailInvalid": "Por favor ingresa un correo electrónico válido",
+      "subjectRequired": "El asunto es obligatorio",
+      "messageRequired": "El mensaje es obligatorio",
+      "messageMin": "El mensaje debe tener al menos 10 caracteres"
+    },
+    "success": "¡Mensaje enviado con éxito! Te responderemos pronto.",
+    "error": "Error al enviar el mensaje. Por favor, inténtalo de nuevo."
+  },
+  "footer": {
+    "description": "Descubre la magia de Marruecos con tours auténticos y experiencias inolvidables.",
+    "quickLinks": "Enlaces Rápidos",
+    "contact": "Información de Contacto",
+    "followUs": "Síguenos",
+    "rights": "Todos los derechos reservados."
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Algo salió mal",
+    "tryAgain": "Intentar de Nuevo",
+    "close": "Cerrar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior"
+  },
+  "excursions": {
+    "title": "Excursiones de un Día",
+    "description": "Descubre increíbles excursiones de un día en Marruecos",
+    "heroTitle": "Excursiones de un Día",
+    "heroSubtitle": "Explora Marruecos con nuestras excursiones de un día cuidadosamente seleccionadas",
+    "loading": "Cargando excursiones...",
+    "error": "Error al cargar excursiones",
+    "noExcursions": "No hay excursiones disponibles en este momento.",
+    "checkBackLater": "¡Vuelve más tarde para nuevas excursiones!",
+    "availableExcursions": "Excursiones Disponibles",
+    "excursion": "excursión",
+    "excursions": "excursiones",
+    "whyChooseTitle": "¿Por Qué Elegir Nuestras Excursiones?",
+    "flexibleTitle": "Duración Flexible",
+    "flexibleDesc": "Perfecto para viajeros con tiempo limitado",
+    "affordableTitle": "Precios Asequibles",
+    "affordableDesc": "Gran valor para todos los presupuestos",
+    "focusedTitle": "Experiencia Enfocada",
+    "focusedDesc": "Descubre atracciones específicas en profundidad"
+  },
+  "tags": {
+    "whatsIncluded": "Qué está Incluido",
+    "whatsNotIncluded": "Qué NO está Incluido",
+    "noIncludedTags": "No hay etiquetas de \"Qué está Incluido\" todavía",
+    "noNotIncludedTags": "No hay etiquetas de \"Qué NO está Incluido\" todavía"
+  }
+}

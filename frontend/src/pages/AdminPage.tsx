@@ -6,9 +6,11 @@ import { bookingsService, BookingResponse } from '../api/bookings'
 import { messagingService, NotificationResponse } from '../api/messaging'
 import toast from 'react-hot-toast'
 import MultiImageTourForm from '../components/MultiImageTourForm'
+import TourForm from '../components/TourForm'
 import GroupPricingManager from '../components/GroupPricingManager'
 import TagManager from '../components/TagManager'
 import TourInfoSectionsManager from '../components/TourInfoSectionsManager'
+import LanguageManager from '../components/LanguageManager'
 
 interface TourImage {
   id?: string
@@ -63,7 +65,7 @@ interface MediaStats {
 
 const AdminPage: React.FC = () => {
   const { t } = useTranslation()
-  const [activeTab, setActiveTab] = useState<'tours' | 'gallery' | 'bookings' | 'messages' | 'settings'>('tours')
+  const [activeTab, setActiveTab] = useState<'tours' | 'gallery' | 'bookings' | 'messages' | 'settings' | 'languages'>('tours')
   const [selectedTourForSettings, setSelectedTourForSettings] = useState<Tour | null>(null)
   const [tours, setTours] = useState<Tour[]>([])
   const [bookings, setBookings] = useState<BookingResponse[]>([])
@@ -141,7 +143,7 @@ const AdminPage: React.FC = () => {
     try {
       const bookingsData = await bookingsService.getAllBookings()
       // Sort by created_at descending (newest first)
-      const sortedBookings = bookingsData.sort((a, b) => 
+      const sortedBookings = bookingsData.sort((a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       )
       setBookings(sortedBookings)
@@ -158,7 +160,7 @@ const AdminPage: React.FC = () => {
     try {
       const messagesData = await messagingService.getAllNotifications()
       // Sort by created_at descending (newest first)
-      const sortedMessages = messagesData.sort((a, b) => 
+      const sortedMessages = messagesData.sort((a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       )
       setMessages(sortedMessages)
@@ -203,36 +205,29 @@ const AdminPage: React.FC = () => {
         duration: data.duration,
         max_participants: data.max_participants,
         difficulty_level: data.difficulty_level,
-        available_dates: data.available_dates ? data.available_dates.split(',').map((d: string) => d.trim()).filter((d: string) => d) : [],
-        translations: {
-          en: {
-            title: data.translations.en.title,
-            description: data.translations.en.description,
-            location: data.translations.en.location,
-            includes: data.translations.en.includes
-          },
-          fr: {
-            title: data.translations.fr.title,
-            description: data.translations.fr.description,
-            location: data.translations.fr.location,
-            includes: data.translations.fr.includes
-          }
-        },
-        images: data.images.map((img: any) => ({
-          image_url: img.image_url,
-          is_main: img.is_main,
-          display_order: img.display_order,
-          alt_text: img.alt_text
-        }))
+        tour_type: data.tour_type,
+        includes: [], // Empty array - managed through tags
+        available_dates: [], // Empty array - managed through availability system
+        translations: data.translations,
+        // Use images array if available, otherwise fall back to single image_url
+        images: data.images && data.images.length > 0 
+          ? data.images 
+          : (data.image_url ? [{
+              image_url: data.image_url,
+              is_main: true,
+              display_order: 0,
+              alt_text: data.translations[0]?.title || 'Tour image'
+            }] : [])
       }
 
-      await toursApi.post('/tours/multilingual', tourData)
-      toast.success('Multilingual tour added successfully!')
+      await toursApi.post('/tours/v2', tourData)
+      toast.success('Tour created successfully with multiple languages!')
       setShowAddForm(false)
       fetchTours()
-    } catch (error) {
-      toast.error('Failed to add multilingual tour')
-      console.error('Error adding multilingual tour:', error)
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.detail || 'Failed to create tour'
+      toast.error(errorMessage)
+      console.error('Error creating tour:', error)
     }
   }
 
@@ -369,8 +364,8 @@ const AdminPage: React.FC = () => {
     try {
       await bookingsService.markAsViewed(bookingId)
       // Update local state
-      setBookings(prev => prev.map(booking => 
-        booking.id === bookingId 
+      setBookings(prev => prev.map(booking =>
+        booking.id === bookingId
           ? { ...booking, admin_viewed: true }
           : booking
       ))
@@ -385,8 +380,8 @@ const AdminPage: React.FC = () => {
     try {
       await bookingsService.updateBookingStatus(bookingId, status)
       // Update local state
-      setBookings(prev => prev.map(booking => 
-        booking.id === bookingId 
+      setBookings(prev => prev.map(booking =>
+        booking.id === bookingId
           ? { ...booking, status }
           : booking
       ))
@@ -404,14 +399,14 @@ const AdminPage: React.FC = () => {
 
     try {
       const result = await bookingsService.completeBooking(bookingId)
-      
+
       // Update local state
-      setBookings(prev => prev.map(booking => 
-        booking.id === bookingId 
+      setBookings(prev => prev.map(booking =>
+        booking.id === bookingId
           ? { ...booking, status: 'completed' }
           : booking
       ))
-      
+
       toast.success('Booking completed and review request sent!')
       console.log('Review token:', result.review_token)
     } catch (error) {
@@ -506,6 +501,16 @@ const AdminPage: React.FC = () => {
               )}
             </button>
             <button
+              onClick={() => setActiveTab('languages')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'languages'
+                ? 'bg-white text-orange-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+                }`}
+            >
+              <Users className="w-4 h-4 inline mr-2" />
+              Languages
+            </button>
+            <button
               onClick={() => setActiveTab('settings')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'settings'
                 ? 'bg-white text-orange-600 shadow-sm'
@@ -556,32 +561,46 @@ const AdminPage: React.FC = () => {
             </div>
 
             {showAddForm && (
-              <MultiImageTourForm
-                mode="add"
-                onSubmit={useMultilingual ? handleAddMultilingualTour : handleAddTour}
-                onCancel={handleCancel}
-                multilingual={useMultilingual}
-              />
+              useMultilingual ? (
+                <TourForm
+                  onSubmit={handleAddMultilingualTour}
+                  onCancel={handleCancel}
+                  submitText="Create Tour"
+                />
+              ) : (
+                <MultiImageTourForm
+                  mode="add"
+                  onSubmit={handleAddTour}
+                  onCancel={handleCancel}
+                  multilingual={false}
+                />
+              )
             )}
 
             {editingTour && (
-              <MultiImageTourForm
-                mode="edit"
-                initialData={{
-                  title: editingTour.title,
-                  description: editingTour.description,
-                  price: editingTour.price,
-                  duration: editingTour.duration,
-                  location: editingTour.location,
-                  max_participants: editingTour.max_participants,
-                  difficulty_level: editingTour.difficulty_level,
-                  includes: Array.isArray(editingTour.includes) ? editingTour.includes.join(', ') : '',
-                  available_dates: Array.isArray(editingTour.available_dates) ? editingTour.available_dates.join(', ') : '',
-                  images: editingTour.images || []
-                }}
-                onSubmit={handleUpdateTour}
-                onCancel={handleCancel}
-              />
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-blue-800 mb-3">
+                  <strong>Editing Tour:</strong> {editingTour.title}
+                </p>
+                <p className="text-sm text-blue-700 mb-4">
+                  To edit this tour with multiple language support, please use the dedicated edit page or API.
+                  The current interface supports creating new tours with multiple languages.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleCancel}
+                    className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+                  >
+                    Cancel
+                  </button>
+                  <a
+                    href={`/admin/tours/${editingTour.id}/edit`}
+                    className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 inline-block"
+                  >
+                    Edit with Full Language Support
+                  </a>
+                </div>
+              </div>
             )}
 
             <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -625,7 +644,7 @@ const AdminPage: React.FC = () => {
                         {tour.location}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        €{tour.price}
+                        €{Number.isInteger(Number(tour.price)) ? Math.floor(Number(tour.price)) : Number(tour.price).toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {tour.duration}
@@ -768,7 +787,7 @@ const AdminPage: React.FC = () => {
                                   <Eye className="w-4 h-4" />
                                 </button>
                               )}
-                              
+
                               {booking.status === 'pending' && (
                                 <>
                                   <button
@@ -787,7 +806,7 @@ const AdminPage: React.FC = () => {
                                   </button>
                                 </>
                               )}
-                              
+
                               {booking.status === 'confirmed' && (
                                 <>
                                   <button
@@ -806,7 +825,7 @@ const AdminPage: React.FC = () => {
                                   </button>
                                 </>
                               )}
-                              
+
                               {booking.status === 'cancelled' && (
                                 <button
                                   onClick={() => handleUpdateBookingStatus(booking.id, 'confirmed')}
@@ -823,7 +842,7 @@ const AdminPage: React.FC = () => {
                     })}
                   </tbody>
                 </table>
-                
+
                 {bookings.length === 0 && (
                   <div className="text-center py-12">
                     <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -904,13 +923,12 @@ const AdminPage: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            message.status === 'sent' 
-                              ? 'bg-green-100 text-green-800'
-                              : message.status === 'failed'
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${message.status === 'sent'
+                            ? 'bg-green-100 text-green-800'
+                            : message.status === 'failed'
                               ? 'bg-red-100 text-red-800'
                               : 'bg-yellow-100 text-yellow-800'
-                          }`}>
+                            }`}>
                             {message.status === 'sent' && <CheckCircle className="w-3 h-3 mr-1" />}
                             {message.status === 'failed' && <XCircle className="w-3 h-3 mr-1" />}
                             {message.status === 'pending' && <Clock className="w-3 h-3 mr-1" />}
@@ -932,7 +950,7 @@ const AdminPage: React.FC = () => {
                     ))}
                   </tbody>
                 </table>
-                
+
                 {messages.length === 0 && (
                   <div className="text-center py-12">
                     <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -1028,6 +1046,16 @@ const AdminPage: React.FC = () => {
               </div>
             )}
           </>
+        )}
+
+        {/* Languages Management */}
+        {activeTab === 'languages' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">Language Management</h2>
+            </div>
+            <LanguageManager />
+          </div>
         )}
 
         {/* Settings Tab - Tour Pricing & Tags */}

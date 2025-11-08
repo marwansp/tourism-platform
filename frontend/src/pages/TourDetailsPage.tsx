@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Helmet } from 'react-helmet-async'
-import { ArrowLeft, Clock, DollarSign, ChevronLeft, ChevronRight, Star, Users, Tag, ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowLeft, Clock, ChevronLeft, ChevronRight, Star, Users, Tag, ChevronDown, ChevronUp, Globe } from 'lucide-react'
 import { Tour, toursService, GroupPricing, TourTag, TourInfoSection } from '../api/tours'
+import { languagesService, Language } from '../api/languages'
 
 interface Review {
     id: string;
@@ -27,9 +28,9 @@ const TourDetailsPage = () => {
     const [totalReviews, setTotalReviews] = useState<number>(0)
     const [groupPricing, setGroupPricing] = useState<GroupPricing[]>([])
     const [tourTags, setTourTags] = useState<TourTag[]>([])
-    const [selectedParticipants, setSelectedParticipants] = useState(1)
     const [infoSections, setInfoSections] = useState<TourInfoSection[]>([])
     const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
+    const [availableLanguages, setAvailableLanguages] = useState<Language[]>([])
 
     useEffect(() => {
         const fetchTour = async () => {
@@ -42,9 +43,25 @@ const TourDetailsPage = () => {
             try {
                 setLoading(true)
                 setError(null)
-                const currentLang = i18n.language.startsWith('fr') ? 'fr' : 'en'
+                
+                // Get current language code from i18n
+                const currentLang = i18n.language.split('-')[0] // Handle cases like 'en-US'
+                
+                // Fetch tour data with current language
                 const tourData = await toursService.getTourById(id, currentLang)
                 setTour(tourData)
+                
+                // Fetch available languages for this tour
+                try {
+                    const langCodes = await languagesService.getTourLanguages(id)
+                    
+                    // Fetch full language details for available languages
+                    const allLanguages = await languagesService.getActiveLanguages()
+                    const tourLangs = allLanguages.filter(lang => langCodes.includes(lang.code))
+                    setAvailableLanguages(tourLangs)
+                } catch (err) {
+                    console.log('Error fetching tour languages:', err)
+                }
                 
                 // Fetch group pricing
                 try {
@@ -293,6 +310,44 @@ const TourDetailsPage = () => {
                                     {tour.title}
                                 </h1>
 
+                                {/* Fallback Language Indicator */}
+                                {tour.is_fallback && (
+                                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
+                                        <Globe size={18} className="text-blue-600 flex-shrink-0" />
+                                        <span className="text-sm text-blue-800">
+                                            {t('tourDetails.translatedFromEnglish') || 'This tour is displayed in English as a translation is not available in your selected language.'}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Available Languages */}
+                                {availableLanguages.length > 0 && (
+                                    <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <Globe size={18} className="text-gray-600 flex-shrink-0" />
+                                            <span className="text-sm text-gray-700 font-medium">
+                                                {t('tourDetails.availableIn') || 'Available in'}:
+                                            </span>
+                                            <div className="flex gap-2 flex-wrap">
+                                                {availableLanguages.map((lang) => (
+                                                    <span
+                                                        key={lang.code}
+                                                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm ${
+                                                            tour.current_language === lang.code
+                                                                ? 'bg-moroccan-terracotta text-white font-medium'
+                                                                : 'bg-white border border-gray-300 text-gray-700'
+                                                        }`}
+                                                        title={lang.name}
+                                                    >
+                                                        <span>{lang.flag_emoji}</span>
+                                                        <span>{lang.code.toUpperCase()}</span>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Tour Info */}
                                 <div className="flex flex-wrap gap-6 mb-6">
                                     <div className="flex items-center space-x-2 text-gray-600">
@@ -300,28 +355,53 @@ const TourDetailsPage = () => {
                                         <span className="font-medium">{t('tourDetails.duration')}: {tour.duration}</span>
                                     </div>
                                     <div className="flex items-center space-x-2 text-moroccan-terracotta">
-                                        <span className="font-semibold text-xl">{t('tourDetails.from')} €{tour.price}{t('tourDetails.perPerson')}</span>
+                                        <span className="font-semibold text-xl">{t('tourDetails.from')} €{Number.isInteger(Number(tour.price)) ? Math.floor(Number(tour.price)) : Number(tour.price).toFixed(2)} {t('tourDetails.perPerson')}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Tags */}
-                            {tourTags.length > 0 && (
+                            {/* Tags - What's Included */}
+                            {tourTags.filter(tt => tt.tag.category === 'included').length > 0 && (
                                 <div>
                                     <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                                        <Tag size={20} className="text-moroccan-terracotta" />
-                                        What's Included
+                                        <Tag size={20} className="text-green-600" />
+                                        ✅ {t('tags.whatsIncluded')}
                                     </h3>
                                     <div className="flex flex-wrap gap-2">
-                                        {tourTags.map((tourTag) => (
-                                            <span
-                                                key={tourTag.id}
-                                                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-moroccan-sand text-gray-700 border border-moroccan-terracotta/20"
-                                            >
-                                                {tourTag.tag.icon && <span className="mr-1">{tourTag.tag.icon}</span>}
-                                                {tourTag.tag.name}
-                                            </span>
-                                        ))}
+                                        {tourTags
+                                            .filter(tt => tt.tag.category === 'included')
+                                            .map((tourTag) => (
+                                                <span
+                                                    key={tourTag.id}
+                                                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-50 text-green-800 border border-green-200"
+                                                >
+                                                    {tourTag.tag.icon && <span className="mr-1">{tourTag.tag.icon}</span>}
+                                                    {tourTag.tag.name}
+                                                </span>
+                                            ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Tags - What's NOT Included */}
+                            {tourTags.filter(tt => tt.tag.category === 'not_included').length > 0 && (
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                        <Tag size={20} className="text-red-600" />
+                                        ❌ {t('tags.whatsNotIncluded')}
+                                    </h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {tourTags
+                                            .filter(tt => tt.tag.category === 'not_included')
+                                            .map((tourTag) => (
+                                                <span
+                                                    key={tourTag.id}
+                                                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-50 text-red-800 border border-red-200"
+                                                >
+                                                    {tourTag.tag.icon && <span className="mr-1">{tourTag.tag.icon}</span>}
+                                                    {tourTag.tag.name}
+                                                </span>
+                                            ))}
                                     </div>
                                 </div>
                             )}
@@ -356,7 +436,7 @@ const TourDetailsPage = () => {
                                                     }
                                                 </span>
                                                 <span className="text-moroccan-terracotta font-bold">
-                                                    €{pricing.price_per_person}{t('tourDetails.perPerson')}
+                                                    €{Number.isInteger(Number(pricing.price_per_person)) ? Math.floor(Number(pricing.price_per_person)) : Number(pricing.price_per_person).toFixed(2)} {t('tourDetails.perPerson')}
                                                 </span>
                                             </div>
                                         ))}

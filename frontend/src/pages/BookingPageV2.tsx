@@ -303,7 +303,7 @@ const BookingPageV2 = () => {
                                             </div>
                                             <div className="flex justify-between items-center py-3 border-b border-gray-200">
                                                 <span className="text-gray-700 font-medium">{t('booking.pricePerPerson')}:</span>
-                                                <span className="font-bold text-gray-900 text-lg">€{priceInfo.price_per_person}</span>
+                                                <span className="font-bold text-gray-900 text-lg">€{Number.isInteger(Number(priceInfo.price_per_person)) ? Math.floor(Number(priceInfo.price_per_person)) : Number(priceInfo.price_per_person).toFixed(2)}</span>
                                             </div>
                                             <div className="flex justify-between items-center py-3 border-b border-gray-200">
                                                 <span className="text-gray-700 font-medium">{t('booking.numberOfParticipants')}:</span>
@@ -313,7 +313,7 @@ const BookingPageV2 = () => {
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-xl font-bold text-gray-900">{t('booking.totalPrice')}:</span>
                                                     <span className="text-3xl font-bold text-moroccan-terracotta">
-                                                        €{priceInfo.total_price}
+                                                        €{Number.isInteger(Number(priceInfo.total_price)) ? Math.floor(Number(priceInfo.total_price)) : Number(priceInfo.total_price).toFixed(2)}
                                                     </span>
                                                 </div>
                                             </div>

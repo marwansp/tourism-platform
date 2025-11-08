@@ -157,7 +157,7 @@ cd /var/www/tourism-platform
 
 # Clone your project (you'll need to push to GitHub first)
 git clone https://github.com/YOUR_USERNAME/tourism-platform.git .
-
+ git clone https://github.com/marwansp/tourism-platform.git 
 # Or upload your files via SCP
 # scp -r ./your-project root@YOUR_DROPLET_IP:/var/www/tourism-platform/
 ```

@@ -37,6 +37,7 @@ class TourBase(BaseModel):
     location: str = Field(..., min_length=1, max_length=100, description="Tour location")
     max_participants: int = Field(..., gt=0, le=50, description="Maximum number of participants")
     difficulty_level: str = Field(..., description="Difficulty level: Easy, Moderate, or Challenging")
+    tour_type: str = Field('tour', pattern="^(tour|excursion)$", description="Tour type: 'tour' or 'excursion'")
     includes: Optional[List[str]] = Field(None, description="List of what's included in the tour")
     available_dates: Optional[List[str]] = Field(None, description="List of available dates")
 
@@ -68,6 +69,7 @@ class TourUpdate(BaseModel):
     location: Optional[str] = Field(None, min_length=1, max_length=100)
     max_participants: Optional[int] = Field(None, gt=0, le=50)
     difficulty_level: Optional[str] = None
+    tour_type: Optional[str] = Field(None, pattern="^(tour|excursion)$")
     includes: Optional[List[str]] = None
     available_dates: Optional[List[str]] = None
     images: Optional[List[TourImageCreate]] = Field(None, description="List of tour images")
@@ -94,6 +96,9 @@ class TourResponse(TourBase):
     created_at: datetime
     updated_at: datetime
     images: List[TourImageResponse] = Field(default_factory=list, description="List of tour images")
+    available_languages: Optional[List[str]] = Field(None, description="List of language codes with translations")
+    current_language: Optional[str] = Field(None, description="Current language code")
+    is_fallback: Optional[bool] = Field(None, description="Whether fallback language is being used")
 
     class Config:
         from_attributes = True
@@ -188,6 +193,7 @@ class TagBase(BaseModel):
     """Base schema for tags"""
     name: str = Field(..., min_length=1, max_length=100, description="Tag name")
     icon: Optional[str] = Field(None, max_length=50, description="Icon emoji or class")
+    category: str = Field('included', pattern="^(included|not_included)$", description="Tag category: 'included' or 'not_included'")
 
 class TagCreate(TagBase):
     """Schema for creating a tag"""
@@ -197,10 +203,12 @@ class TagUpdate(BaseModel):
     """Schema for updating a tag"""
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     icon: Optional[str] = Field(None, max_length=50)
+    category: Optional[str] = Field(None, pattern="^(included|not_included)$")
 
 class TagResponse(TagBase):
     """Schema for tag response"""
     id: str
+    category: str
     created_at: datetime
 
     class Config:
@@ -305,6 +313,75 @@ class TourCreateWithTranslations(BaseModel):
         return v
 
 
+class TourTranslationInput(BaseModel):
+    """Schema for a single tour translation input"""
+    language_code: str = Field(..., min_length=2, max_length=2, description="Language code (e.g., 'en', 'fr', 'es')")
+    title: str = Field(..., min_length=1, max_length=200, description="Translated tour title")
+    description: str = Field(..., min_length=10, description="Translated tour description")
+    location: Optional[str] = Field(None, min_length=1, max_length=100, description="Translated location")
+    itinerary: Optional[str] = Field(None, description="Translated itinerary/includes")
+
+
+class TourCreateDynamic(BaseModel):
+    """Schema for creating a tour with dynamic language support"""
+    # Non-translatable fields
+    price: Decimal = Field(..., gt=0, description="Price per person")
+    duration: str = Field(..., min_length=1, max_length=50, description="Tour duration")
+    max_participants: int = Field(..., gt=0, le=50, description="Maximum participants")
+    difficulty_level: str = Field(..., description="Difficulty level")
+    tour_type: str = Field('tour', pattern="^(tour|excursion)$", description="Tour type")
+    includes: Optional[List[str]] = Field(None, description="List of what's included")
+    available_dates: Optional[List[str]] = Field(None, description="Available dates")
+    
+    # Translations as array
+    translations: List[TourTranslationInput] = Field(..., min_items=1, description="Array of translations")
+    
+    # Images
+    images: Optional[List[TourImageCreate]] = None
+
+    @validator('translations')
+    def validate_translations(cls, v):
+        """Ensure English translation is provided"""
+        if not any(trans.language_code == 'en' for trans in v):
+            raise ValueError('English (en) translation is required')
+        return v
+    
+    @validator('difficulty_level')
+    def validate_difficulty(cls, v):
+        """Validate difficulty level"""
+        allowed_levels = ['Easy', 'Moderate', 'Challenging']
+        if v not in allowed_levels:
+            raise ValueError(f'Difficulty level must be one of: {", ".join(allowed_levels)}')
+        return v
+
+
+class TourUpdateDynamic(BaseModel):
+    """Schema for updating a tour with dynamic language support"""
+    # Non-translatable fields (all optional)
+    price: Optional[Decimal] = Field(None, gt=0)
+    duration: Optional[str] = Field(None, min_length=1, max_length=50)
+    max_participants: Optional[int] = Field(None, gt=0, le=50)
+    difficulty_level: Optional[str] = None
+    tour_type: Optional[str] = Field(None, pattern="^(tour|excursion)$")
+    includes: Optional[List[str]] = None
+    available_dates: Optional[List[str]] = None
+    
+    # Translations as array (optional)
+    translations: Optional[List[TourTranslationInput]] = None
+    
+    # Images (optional)
+    images: Optional[List[TourImageCreate]] = None
+
+    @validator('difficulty_level')
+    def validate_difficulty(cls, v):
+        """Validate difficulty level"""
+        if v is not None:
+            allowed_levels = ['Easy', 'Moderate', 'Challenging']
+            if v not in allowed_levels:
+                raise ValueError(f'Difficulty level must be one of: {", ".join(allowed_levels)}')
+        return v
+
+
 # ============================================================================
 # TOUR INFO SECTIONS SCHEMAS
 # ============================================================================
@@ -340,6 +417,45 @@ class TourInfoSectionResponse(TourInfoSectionBase):
         from_attributes = True
     
     @validator('id', 'tour_id', pre=True)
+    def convert_uuid_to_string(cls, v):
+        """Convert UUID to string for JSON serialization"""
+        return str(v) if v else None
+
+
+# ============================================================================
+# LANGUAGE SCHEMAS
+# ============================================================================
+
+class LanguageBase(BaseModel):
+    """Base schema for languages"""
+    code: str = Field(..., min_length=2, max_length=2, pattern="^[a-z]{2}$", description="ISO 639-1 language code (2 lowercase letters)")
+    name: str = Field(..., min_length=1, max_length=100, description="English name of the language")
+    native_name: str = Field(..., min_length=1, max_length=100, description="Native name of the language")
+    flag_emoji: str = Field(..., min_length=1, max_length=10, description="Flag emoji for the language")
+    is_active: bool = Field(True, description="Whether the language is active")
+
+class LanguageCreate(LanguageBase):
+    """Schema for creating a new language"""
+    pass
+
+class LanguageUpdate(BaseModel):
+    """Schema for updating a language"""
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    native_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    flag_emoji: Optional[str] = Field(None, min_length=1, max_length=10)
+    is_active: Optional[bool] = None
+    is_default: Optional[bool] = None
+
+class LanguageResponse(LanguageBase):
+    """Schema for language response"""
+    id: str
+    is_default: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+    
+    @validator('id', pre=True)
     def convert_uuid_to_string(cls, v):
         """Convert UUID to string for JSON serialization"""
         return str(v) if v else None

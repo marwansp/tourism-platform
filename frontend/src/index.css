@@ -41,7 +41,6 @@
   .container-custom {
     @apply max-w-7xl mx-auto;
   }
-  
 }
 
 @layer utilities {
@@ -60,4 +59,94 @@
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
+}
+
+/* Rich Text Editor Styles */
+.rich-text-editor .ql-container {
+  min-height: 200px;
+  font-size: 16px;
+  border-bottom-left-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+}
+
+.rich-text-editor .ql-toolbar {
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+  background-color: #f9fafb;
+}
+
+.rich-text-editor .ql-editor {
+  min-height: 200px;
+}
+
+.rich-text-editor .ql-editor.ql-blank::before {
+  color: #9ca3af;
+  font-style: normal;
+}
+
+/* Rendered HTML Content Styles */
+.tour-description h1,
+.tour-description h2,
+.tour-description h3 {
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: #1f2937;
+}
+
+.tour-description h1 {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+.tour-description h2 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+.tour-description h3 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+.tour-description p {
+  margin-bottom: 1rem;
+  line-height: 1.75;
+}
+
+.tour-description ul,
+.tour-description ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.tour-description ul {
+  list-style-type: disc;
+}
+
+.tour-description ol {
+  list-style-type: decimal;
+}
+
+.tour-description li {
+  margin-bottom: 0.5rem;
+  line-height: 1.75;
+}
+
+.tour-description strong {
+  font-weight: 600;
+  color: #111827;
+}
+
+.tour-description em {
+  font-style: italic;
+}
+
+.tour-description a {
+  color: #ea580c;
+  text-decoration: underline;
+}
+
+.tour-description a:hover {
+  color: #c2410c;
 }

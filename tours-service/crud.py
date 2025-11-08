@@ -43,38 +43,87 @@ def get_tour_by_id(db: Session, tour_id: str) -> Optional[Tour]:
         # Invalid UUID format
         return None
 
-def create_tour(db: Session, tour: TourCreate) -> Tour:
+def create_tour(db: Session, tour: TourCreate, translations: Optional[List[dict]] = None) -> Tour:
     """
-    Create a new tour with images
+    Create a new tour with images and translations
     
     Args:
         db: Database session
         tour: TourCreate schema with tour data
+        translations: Optional list of translation dicts with {language_code, title, description, itinerary}
     
     Returns:
         Created Tour object
     
     Raises:
+        ValueError: If validation fails (e.g., invalid language_code)
         SQLAlchemyError: If database operation fails
     """
+    from models import Language, TourTranslation
+    
     try:
-        db_tour = Tour(
-            title=tour.title,
-            description=tour.description,
-            base_price=tour.price,  # Map price to base_price
-            duration_days=1,  # Default to 1 day, can be enhanced later
-            duration_description=tour.duration,  # Map duration to duration_description
-            location=tour.location,
-            max_participants=tour.max_participants,
-            difficulty_level=tour.difficulty_level,
-            includes=tour.includes,
-            available_dates=tour.available_dates,
-            # Set legacy fields for backward compatibility
-            price=tour.price,
-            duration=tour.duration
-        )
+        # If translations are provided, validate language codes exist
+        if translations:
+            for trans in translations:
+                lang_code = trans.get('language_code')
+                if not lang_code:
+                    raise ValueError("language_code is required for each translation")
+                
+                # Validate language exists in languages table
+                language = db.query(Language).filter(Language.code == lang_code).first()
+                if not language:
+                    raise ValueError(f"Language code '{lang_code}' does not exist in the system")
+        
+        # Create tour with non-translatable fields
+        # Use first translation for legacy fields if translations provided
+        if translations and len(translations) > 0:
+            first_trans = translations[0]
+            db_tour = Tour(
+                title=first_trans.get('title', tour.title),
+                description=first_trans.get('description', tour.description),
+                location=first_trans.get('location', tour.location) if 'location' in first_trans else tour.location,
+                base_price=tour.price,
+                duration_days=1,
+                duration_description=tour.duration,
+                max_participants=tour.max_participants,
+                difficulty_level=tour.difficulty_level,
+                includes=tour.includes,
+                available_dates=tour.available_dates,
+                price=tour.price,
+                duration=tour.duration
+            )
+        else:
+            # Backward compatibility: create tour with old schema
+            db_tour = Tour(
+                title=tour.title,
+                description=tour.description,
+                base_price=tour.price,
+                duration_days=1,
+                duration_description=tour.duration,
+                location=tour.location,
+                max_participants=tour.max_participants,
+                difficulty_level=tour.difficulty_level,
+                includes=tour.includes,
+                available_dates=tour.available_dates,
+                price=tour.price,
+                duration=tour.duration
+            )
+        
         db.add(db_tour)
         db.flush()  # Get the tour ID without committing
+        
+        # Add translations if provided
+        if translations:
+            for trans in translations:
+                db_translation = TourTranslation(
+                    tour_id=db_tour.id,
+                    language_code=trans['language_code'],
+                    title=trans['title'],
+                    description=trans['description'],
+                    location=trans.get('location', tour.location),
+                    includes=trans.get('itinerary', '')  # Map itinerary to includes field
+                )
+                db.add(db_translation)
         
         # Add images if provided
         if tour.images:
@@ -96,25 +145,32 @@ def create_tour(db: Session, tour: TourCreate) -> Tour:
         db.commit()
         db.refresh(db_tour)
         return db_tour
+    except ValueError as e:
+        db.rollback()
+        raise e
     except SQLAlchemyError as e:
         db.rollback()
         raise e
 
-def update_tour(db: Session, tour_id: str, tour: TourUpdate) -> Optional[Tour]:
+def update_tour(db: Session, tour_id: str, tour: TourUpdate, translations: Optional[List[dict]] = None) -> Optional[Tour]:
     """
-    Update an existing tour with images
+    Update an existing tour with images and translations
     
     Args:
         db: Database session
         tour_id: UUID string of the tour to update
         tour: TourUpdate schema with updated data
+        translations: Optional list of translation dicts with {language_code, title, description, itinerary}
     
     Returns:
         Updated Tour object if found, None otherwise
     
     Raises:
+        ValueError: If validation fails (e.g., invalid language_code)
         SQLAlchemyError: If database operation fails
     """
+    from models import Language, TourTranslation
+    
     try:
         # Convert string to UUID for query
         tour_uuid = uuid.UUID(tour_id)
@@ -122,6 +178,18 @@ def update_tour(db: Session, tour_id: str, tour: TourUpdate) -> Optional[Tour]:
         
         if db_tour is None:
             return None
+        
+        # If translations are provided, validate language codes exist
+        if translations:
+            for trans in translations:
+                lang_code = trans.get('language_code')
+                if not lang_code:
+                    raise ValueError("language_code is required for each translation")
+                
+                # Validate language exists in languages table
+                language = db.query(Language).filter(Language.code == lang_code).first()
+                if not language:
+                    raise ValueError(f"Language code '{lang_code}' does not exist in the system")
         
         # Update tour fields (excluding images)
         update_data = tour.dict(exclude_unset=True, exclude={'images'})
@@ -142,6 +210,51 @@ def update_tour(db: Session, tour_id: str, tour: TourUpdate) -> Optional[Tour]:
                 setattr(db_tour, 'price', value)
             elif field == 'duration':
                 setattr(db_tour, 'duration', value)
+        
+        # Handle translations update if provided
+        if translations is not None:
+            # Get existing translation language codes
+            existing_translations = db.query(TourTranslation).filter(
+                TourTranslation.tour_id == tour_uuid
+            ).all()
+            existing_lang_codes = {t.language_code for t in existing_translations}
+            
+            # Get new translation language codes
+            new_lang_codes = {t['language_code'] for t in translations}
+            
+            # Delete translations that are no longer in the new list
+            removed_lang_codes = existing_lang_codes - new_lang_codes
+            if removed_lang_codes:
+                db.query(TourTranslation).filter(
+                    TourTranslation.tour_id == tour_uuid,
+                    TourTranslation.language_code.in_(removed_lang_codes)
+                ).delete(synchronize_session=False)
+            
+            # Insert or update translations
+            for trans in translations:
+                lang_code = trans['language_code']
+                existing_trans = next(
+                    (t for t in existing_translations if t.language_code == lang_code),
+                    None
+                )
+                
+                if existing_trans:
+                    # Update existing translation
+                    existing_trans.title = trans['title']
+                    existing_trans.description = trans['description']
+                    existing_trans.location = trans.get('location', existing_trans.location)
+                    existing_trans.includes = trans.get('itinerary', '')
+                else:
+                    # Create new translation
+                    db_translation = TourTranslation(
+                        tour_id=tour_uuid,
+                        language_code=lang_code,
+                        title=trans['title'],
+                        description=trans['description'],
+                        location=trans.get('location', db_tour.location),
+                        includes=trans.get('itinerary', '')
+                    )
+                    db.add(db_translation)
         
         # Handle images update if provided
         if tour.images is not None:
@@ -168,9 +281,9 @@ def update_tour(db: Session, tour_id: str, tour: TourUpdate) -> Optional[Tour]:
         db.commit()
         db.refresh(db_tour)
         return db_tour
-    except ValueError:
-        # Invalid UUID format
-        return None
+    except ValueError as e:
+        db.rollback()
+        raise e
     except SQLAlchemyError as e:
         db.rollback()
         raise e
@@ -618,7 +731,8 @@ def create_tag(db: Session, tag: TagCreate) -> Tag:
     try:
         db_tag = Tag(
             name=tag.name,
-            icon=tag.icon
+            icon=tag.icon,
+            category=tag.category
         )
         db.add(db_tag)
         db.commit()
@@ -787,22 +901,55 @@ def get_tour_with_translation(db: Session, tour_id: str, language: str = "en"):
     
     return tour
 
-def get_tours_with_language(db: Session, language: str = "en", skip: int = 0, limit: int = 100):
-    """Get all tours with translations in specified language"""
-    from models import Tour, TourTranslation
+def get_tours_with_language(db: Session, language: str = "en", tour_type: str = None, skip: int = 0, limit: int = 100):
+    """Get all tours with translations in specified language with fallback to default"""
+    from models import Tour, TourTranslation, Language
     from sqlalchemy.orm import joinedload
     import json
     
-    # Get tours with their translations
-    tours = db.query(Tour).options(
+    # Validate that the requested language exists
+    requested_language = db.query(Language).filter(Language.code == language).first()
+    if not requested_language:
+        # If language doesn't exist, use default language
+        default_language = db.query(Language).filter(Language.is_default == True).first()
+        if default_language:
+            language = default_language.code
+        else:
+            language = "en"  # Ultimate fallback
+    
+    # Get default language for fallback
+    default_language = db.query(Language).filter(Language.is_default == True).first()
+    default_lang_code = default_language.code if default_language else "en"
+    
+    # Build query with optional tour_type filter
+    query = db.query(Tour).options(
         joinedload(Tour.translations),
         joinedload(Tour.images)
-    ).offset(skip).limit(limit).all()
+    )
+    
+    # Apply tour_type filter if provided
+    if tour_type:
+        query = query.filter(Tour.tour_type == tour_type)
+    
+    # Get tours with their translations
+    tours = query.offset(skip).limit(limit).all()
     
     # Apply translations to each tour
     result = []
     for tour in tours:
-        translation = next((t for t in tour.translations if t.language == language), None)
+        # Get available languages for this tour
+        available_languages = [t.language_code for t in tour.translations]
+        
+        # Try to get translation in requested language
+        translation = next((t for t in tour.translations if t.language_code == language), None)
+        is_fallback = False
+        
+        # If translation not found, fallback to default language
+        if not translation:
+            translation = next((t for t in tour.translations if t.language_code == default_lang_code), None)
+            is_fallback = True
+        
+        # Apply translation if found
         if translation:
             tour.title = translation.title
             tour.description = translation.description
@@ -813,6 +960,12 @@ def get_tours_with_language(db: Session, language: str = "en", skip: int = 0, li
                     tour.includes = json.loads(translation.includes) if isinstance(translation.includes, str) else translation.includes
                 except:
                     tour.includes = [translation.includes]
+        
+        # Add metadata to tour object
+        tour.available_languages = available_languages
+        tour.current_language = language
+        tour.is_fallback = is_fallback
+        
         result.append(tour)
     
     return result
@@ -1005,3 +1158,341 @@ def reorder_tour_info_sections(db: Session, tour_id: str, section_orders: list):
     
     db.commit()
     return True
+
+
+# ============================================================================
+# LANGUAGE CRUD OPERATIONS
+# ============================================================================
+
+def get_all_languages(db: Session, active_only: bool = True) -> List:
+    """
+    Get all languages, optionally filtered by active status
+    
+    Args:
+        db: Database session
+        active_only: If True, return only active languages
+    
+    Returns:
+        List of Language objects sorted by is_default desc, name asc
+    """
+    from models import Language
+    
+    query = db.query(Language)
+    
+    if active_only:
+        query = query.filter(Language.is_active == True)
+    
+    # Sort by is_default descending (default language first), then by name ascending
+    return query.order_by(Language.is_default.desc(), Language.name.asc()).all()
+
+
+def create_language(db: Session, language_data: dict):
+    """
+    Create a new language
+    
+    Args:
+        db: Database session
+        language_data: Dictionary with language data (code, name, native_name, flag_emoji, is_active)
+    
+    Returns:
+        Created Language object
+    
+    Raises:
+        ValueError: If validation fails
+        SQLAlchemyError: If database operation fails
+    """
+    from models import Language
+    import re
+    
+    # Validate code is exactly 2 lowercase letters
+    code = language_data.get('code', '').strip()
+    if not code:
+        raise ValueError("Language code is required")
+    if len(code) != 2:
+        raise ValueError("Language code must be exactly 2 characters")
+    if not re.match(r'^[a-z]{2}$', code):
+        raise ValueError("Language code must be exactly 2 lowercase letters")
+    
+    # Validate required fields
+    if not language_data.get('name'):
+        raise ValueError("Language name is required")
+    if not language_data.get('native_name'):
+        raise ValueError("Native name is required")
+    if not language_data.get('flag_emoji'):
+        raise ValueError("Flag emoji is required")
+    
+    # Check if language code already exists
+    existing = db.query(Language).filter(Language.code == code).first()
+    if existing:
+        raise ValueError(f"Language code '{code}' already exists")
+    
+    try:
+        db_language = Language(
+            code=code,
+            name=language_data['name'].strip(),
+            native_name=language_data['native_name'].strip(),
+            flag_emoji=language_data['flag_emoji'].strip(),
+            is_active=language_data.get('is_active', True),
+            is_default=False  # New languages are never default
+        )
+        
+        db.add(db_language)
+        db.commit()
+        db.refresh(db_language)
+        return db_language
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise e
+
+
+def update_language(db: Session, language_id: str, language_data: dict):
+    """
+    Update an existing language
+    
+    Args:
+        db: Database session
+        language_id: UUID string of the language to update
+        language_data: Dictionary with updated language data (name, native_name, flag_emoji, is_active)
+    
+    Returns:
+        Updated Language object if found, None otherwise
+    
+    Raises:
+        ValueError: If validation fails
+        SQLAlchemyError: If database operation fails
+    """
+    from models import Language
+    
+    try:
+        language_uuid = uuid.UUID(language_id)
+        db_language = db.query(Language).filter(Language.id == language_uuid).first()
+        
+        if not db_language:
+            return None
+        
+        # Prevent changing code after creation
+        if 'code' in language_data:
+            raise ValueError("Cannot change language code after creation")
+        
+        # Prevent deactivating default language
+        if 'is_active' in language_data and not language_data['is_active']:
+            if db_language.is_default:
+                raise ValueError("Cannot deactivate the default language")
+        
+        # Prevent removing default status if this is the only default language
+        if 'is_default' in language_data and not language_data['is_default']:
+            if db_language.is_default:
+                # Check if there are other default languages
+                other_defaults = db.query(Language).filter(
+                    Language.is_default == True,
+                    Language.id != language_uuid
+                ).count()
+                if other_defaults == 0:
+                    raise ValueError("Cannot remove default status. At least one language must be default")
+        
+        # Validate is_default constraint (only one default)
+        if 'is_default' in language_data and language_data['is_default']:
+            # If setting this language as default, unset any other default
+            if not db_language.is_default:
+                db.query(Language).filter(Language.is_default == True).update({'is_default': False})
+        
+        # Update only provided fields
+        update_fields = ['name', 'native_name', 'flag_emoji', 'is_active', 'is_default']
+        for field in update_fields:
+            if field in language_data:
+                value = language_data[field]
+                if isinstance(value, str):
+                    value = value.strip()
+                setattr(db_language, field, value)
+        
+        db.commit()
+        db.refresh(db_language)
+        return db_language
+    except ValueError as e:
+        db.rollback()
+        raise e
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise e
+
+
+def delete_language(db: Session, language_id: str) -> bool:
+    """
+    Delete a language
+    
+    Args:
+        db: Database session
+        language_id: UUID string of the language to delete
+    
+    Returns:
+        True if language was deleted, False if not found
+    
+    Raises:
+        ValueError: If language is default or has translations
+        SQLAlchemyError: If database operation fails
+    """
+    from models import Language, TourTranslation
+    
+    try:
+        # Convert string to UUID
+        try:
+            language_uuid = uuid.UUID(language_id)
+        except (ValueError, AttributeError) as e:
+            raise ValueError(f"Invalid UUID format: {str(e)}")
+        
+        db_language = db.query(Language).filter(Language.id == language_uuid).first()
+        
+        if not db_language:
+            return False
+        
+        # Check if language is default
+        if db_language.is_default:
+            raise ValueError("Cannot delete the default language")
+        
+        # Check if tours have translations in this language
+        translation_count = db.query(TourTranslation).filter(
+            TourTranslation.language_code == db_language.code
+        ).count()
+        
+        if translation_count > 0:
+            raise ValueError(
+                f"Cannot delete language '{db_language.code}'. "
+                f"{translation_count} tour(s) have translations in this language."
+            )
+        
+        # Delete the language
+        db.delete(db_language)
+        db.commit()
+        return True
+    except ValueError as e:
+        # Don't rollback for ValueError (validation errors)
+        raise e
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise e
+
+
+def get_tour_available_languages(db: Session, tour_id: str) -> List[str]:
+    """
+    Get list of language codes that have translations for a specific tour
+    
+    Args:
+        db: Database session
+        tour_id: UUID string of the tour
+    
+    Returns:
+        List of language codes (e.g., ['en', 'fr', 'es'])
+    """
+    from models import TourTranslation
+    
+    try:
+        tour_uuid = uuid.UUID(tour_id)
+        
+        # Query distinct language_code values for this tour
+        language_codes = db.query(TourTranslation.language_code).filter(
+            TourTranslation.tour_id == tour_uuid
+        ).distinct().all()
+        
+        # Extract language codes from query result tuples
+        return [code[0] for code in language_codes]
+    except ValueError:
+        # Invalid UUID format
+        return []
+
+
+def get_tour_with_dynamic_language(db: Session, tour_id: str, language: str = "en"):
+    """
+    Get tour with translation in specified language with dynamic language support
+    
+    Args:
+        db: Database session
+        tour_id: UUID string of the tour
+        language: Language code (e.g., 'en', 'fr', 'es')
+    
+    Returns:
+        Tour object with translation applied, or None if tour not found
+        Adds metadata: available_languages, current_language, is_fallback
+    """
+    from models import Tour, TourTranslation, Language
+    from sqlalchemy.orm import joinedload
+    from sqlalchemy import inspect
+    import json
+    
+    try:
+        tour_uuid = uuid.UUID(tour_id)
+    except ValueError:
+        return None
+    
+    # Get the tour with relationships
+    tour = db.query(Tour).options(
+        joinedload(Tour.translations),
+        joinedload(Tour.images)
+    ).filter(Tour.id == tour_uuid).first()
+    
+    if not tour:
+        return None
+    
+    # Check if we're using the new schema (language_code) or old schema (language)
+    # by inspecting the TourTranslation model columns
+    inspector = inspect(TourTranslation)
+    column_names = [c.key for c in inspector.columns]
+    use_new_schema = 'language_code' in column_names
+    lang_field = 'language_code' if use_new_schema else 'language'
+    
+    # Store the originally requested language for fallback detection
+    requested_lang = language
+    
+    # Validate that the requested language exists (only if using new schema with Language table)
+    if use_new_schema:
+        requested_language = db.query(Language).filter(Language.code == language).first()
+        if not requested_language:
+            # If language doesn't exist, use default language
+            default_language = db.query(Language).filter(Language.is_default == True).first()
+            if default_language:
+                language = default_language.code
+            else:
+                language = "en"  # Ultimate fallback
+        
+        # Get default language for fallback
+        default_language = db.query(Language).filter(Language.is_default == True).first()
+        default_lang_code = default_language.code if default_language else "en"
+    else:
+        # Old schema: just use 'en' as default
+        default_lang_code = "en"
+    
+    # Get available languages for this tour
+    available_languages = [getattr(t, lang_field) for t in tour.translations]
+    
+    # Try to get translation in requested language
+    translation = next((t for t in tour.translations if getattr(t, lang_field) == language), None)
+    is_fallback = False
+    actual_language = language
+    
+    # If translation not found, fallback to default language
+    if not translation:
+        translation = next((t for t in tour.translations if getattr(t, lang_field) == default_lang_code), None)
+        is_fallback = True
+        actual_language = default_lang_code  # Update to reflect actual language used
+    
+    # Also mark as fallback if the requested language was changed due to not existing
+    if requested_lang != language:
+        is_fallback = True
+    
+    # Apply translation if found
+    if translation:
+        tour.title = translation.title
+        tour.description = translation.description
+        tour.location = translation.location
+        # Parse includes if it's a JSON string
+        if translation.includes:
+            try:
+                tour.includes = json.loads(translation.includes) if isinstance(translation.includes, str) else translation.includes
+            except:
+                tour.includes = [translation.includes]
+    
+    # Add metadata to tour object
+    tour.available_languages = available_languages
+    tour.current_language = actual_language  # Use actual language, not requested
+    tour.is_fallback = is_fallback
+    
+    return tour

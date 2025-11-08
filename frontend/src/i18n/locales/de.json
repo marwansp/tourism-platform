@@ -1,0 +1,239 @@
+{
+  "meta": {
+    "title": "Marokko Tourismus - Entdecken Sie die Magie Marokkos",
+    "description": "Entdecken Sie Marokko mit unseren authentischen Touren. Erleben Sie die Sahara-Wüste, das Atlas-Gebirge und historische Städte. Buchen Sie heute Ihr Abenteuer!"
+  },
+  "navbar": {
+    "home": "Startseite",
+    "tours": "Touren",
+    "excursions": "Ausflüge",
+    "gallery": "Galerie",
+    "booking": "Buchung",
+    "contact": "Kontakt",
+    "language": "Sprache"
+  },
+  "home": {
+    "hero": {
+      "title": "Entdecken Sie die Magie Marokkos",
+      "subtitle": "Erleben Sie authentische Abenteuer in der Sahara-Wüste, im Atlas-Gebirge und in historischen Kaiserstädten",
+      "cta": "Unsere Touren Erkunden"
+    },
+    "featured": {
+      "title": "Empfohlene Touren",
+      "subtitle": "Handverlesene Erlebnisse, die das Beste von Marokko zeigen"
+    },
+    "why": {
+      "title": "Warum Uns Wählen",
+      "authentic": {
+        "title": "Authentische Erlebnisse",
+        "description": "Lokale Führer und echtes kulturelles Eintauchen"
+      },
+      "comfort": {
+        "title": "Komfortables Reisen",
+        "description": "Moderne Fahrzeuge und hochwertige Unterkünfte"
+      },
+      "support": {
+        "title": "24/7 Support",
+        "description": "Immer für Sie da während Ihrer Reise"
+      }
+    }
+  },
+  "tours": {
+    "title": "Unsere Touren",
+    "subtitle": "Wählen Sie aus unseren sorgfältig gestalteten marokkanischen Abenteuern",
+    "viewDetails": "Details Anzeigen",
+    "bookNow": "Jetzt Buchen",
+    "duration": "Dauer",
+    "price": "Preis",
+    "perPerson": "pro Person",
+    "perDay": "pro Tag",
+    "loading": "Touren werden geladen...",
+    "error": "Fehler beim Laden der Touren. Bitte versuchen Sie es erneut.",
+    "noTours": "Derzeit sind keine Touren verfügbar.",
+    "translatedFromEnglish": "Aus dem Englischen übersetzt"
+  },
+  "tourDetails": {
+    "bookTour": "Diese Tour Buchen",
+    "duration": "Dauer",
+    "price": "Preis",
+    "perPerson": "pro Person",
+    "perDay": "pro Tag",
+    "loading": "Tourdetails werden geladen...",
+    "error": "Tour nicht gefunden oder Ladefehler.",
+    "backToTours": "Zurück zu Touren",
+    "readyToBook": "Bereit zum Buchen?",
+    "bookingDescription": "Sichern Sie sich Ihren Platz bei diesem fantastischen Abenteuer. Wir werden Sie kontaktieren, um alle Details zu bestätigen.",
+    "questions": "Fragen?",
+    "questionsDescription": "Benötigen Sie weitere Informationen oder haben Sie besondere Wünsche? Wir sind hier, um zu helfen!",
+    "contactUs": "Kontaktieren Sie Uns →",
+    "groupPricing": "Gruppenpreise",
+    "betterPricesForGroups": "Bessere Preise für größere Gruppen!",
+    "person": "Person",
+    "people": "Personen",
+    "perPersonShort": "/Person",
+    "aboutThisTour": "Über Diese Tour",
+    "from": "Ab",
+    "customerReviews": "Kundenbewertungen",
+    "noReviews": "Noch keine Bewertungen. Seien Sie der Erste, der diese Tour bewertet!",
+    "translatedFromEnglish": "Diese Tour wird auf Englisch angezeigt, da keine Übersetzung in Ihrer gewählten Sprache verfügbar ist.",
+    "availableIn": "Verfügbar in"
+  },
+  "booking": {
+    "title": "Buchen Sie Ihr Abenteuer",
+    "subtitle": "Füllen Sie Ihre Daten aus und wir werden Sie kontaktieren, um Ihre Buchung zu bestätigen",
+    "form": {
+      "name": "Vollständiger Name",
+      "namePlaceholder": "Geben Sie Ihren vollständigen Namen ein",
+      "email": "E-Mail-Adresse",
+      "emailPlaceholder": "Geben Sie Ihre E-Mail-Adresse ein",
+      "phone": "Telefonnummer",
+      "phonePlaceholder": "Geben Sie Ihre Telefonnummer ein (optional)",
+      "tourId": "Tour Auswählen",
+      "tourPlaceholder": "Wählen Sie eine Tour",
+      "participants": "Anzahl der Teilnehmer",
+      "startDate": "Startdatum",
+      "endDate": "Enddatum",
+      "travelDate": "Reisedatum",
+      "submit": "Buchung Absenden",
+      "submitting": "Wird gesendet..."
+    },
+    "validation": {
+      "nameRequired": "Name ist erforderlich",
+      "nameMin": "Name muss mindestens 2 Zeichen lang sein",
+      "emailRequired": "E-Mail ist erforderlich",
+      "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+      "tourRequired": "Bitte wählen Sie eine Tour aus",
+      "participantsRequired": "Anzahl der Teilnehmer ist erforderlich",
+      "participantsMin": "Mindestens 1 Teilnehmer erforderlich",
+      "participantsMax": "Maximal 50 Teilnehmer erlaubt",
+      "startDateRequired": "Startdatum ist erforderlich",
+      "endDateRequired": "Enddatum ist erforderlich",
+      "endDateAfterStart": "Enddatum muss nach dem Startdatum liegen",
+      "dateRequired": "Reisedatum ist erforderlich",
+      "dateFuture": "Reisedatum muss in der Zukunft liegen"
+    },
+    "calculating": "Preis wird berechnet...",
+    "priceBreakdown": "Preisaufschlüsselung",
+    "basePricePerDay": "Basispreis pro Tag",
+    "seasonalAdjustment": "Saisonale Anpassung",
+    "groupDiscount": "Gruppenrabatt",
+    "finalPricePerDay": "Endpreis pro Tag",
+    "duration": "Dauer",
+    "day": "Tag",
+    "days": "Tage",
+    "participants": "Teilnehmer",
+    "totalPrice": "Gesamtpreis",
+    "bookYourAdventure": "Buchen Sie Ihr",
+    "moroccanAdventure": "Marokkanisches Abenteuer",
+    "completeForm": "Füllen Sie das Formular unten aus, um Ihre unvergessliche Reise durch Marokko zu reservieren",
+    "selectYourTour": "Wählen Sie Ihre Tour",
+    "chooseAdventure": "Wählen Sie Ihr Abenteuer...",
+    "tourDetails": "Tourdetails",
+    "startDate": "Startdatum",
+    "numberOfParticipants": "Anzahl der Teilnehmer",
+    "tourDuration": "Tourdauer",
+    "endDate": "Enddatum",
+    "automaticallyCalculated": "(automatisch berechnet)",
+    "pricingTier": "Preisstufe",
+    "pricePerPerson": "Preis pro Person",
+    "numberOfPeople": "Anzahl der Personen",
+    "subtotal": "Zwischensumme",
+    "yourInformation": "Ihre Informationen",
+    "fullName": "Vollständiger Name",
+    "enterFullName": "Geben Sie Ihren vollständigen Namen ein",
+    "emailAddress": "E-Mail-Adresse",
+    "enterEmail": "Geben Sie Ihre E-Mail-Adresse ein",
+    "phoneNumber": "Telefonnummer (Optional)",
+    "enterPhone": "Geben Sie Ihre Telefonnummer ein",
+    "specialRequests": "Besondere Wünsche (Optional)",
+    "anySpecialRequests": "Haben Sie besondere Wünsche oder diätetische Anforderungen?",
+    "confirmBooking": "Buchung Bestätigen",
+    "submittingBooking": "Buchung wird gesendet...",
+    "loading": "Wird geladen...",
+    "success": "Buchung erfolgreich gesendet! Wir werden Sie bald kontaktieren, um Ihr Abenteuer zu bestätigen.",
+    "error": "Fehler beim Senden der Buchung. Bitte versuchen Sie es erneut."
+  },
+  "gallery": {
+    "title": "Galerie",
+    "subtitle": "Einblicke in die wunderschönen Ziele, die Sie erkunden werden",
+    "loading": "Galerie wird geladen...",
+    "error": "Fehler beim Laden der Galeriebilder.",
+    "noImages": "Derzeit sind keine Bilder verfügbar."
+  },
+  "contact": {
+    "title": "Kontaktieren Sie Uns",
+    "subtitle": "Nehmen Sie Kontakt mit uns auf für Fragen oder besondere Wünsche",
+    "info": {
+      "title": "Kontaktinformationen",
+      "address": "Marrakesch, Marokko",
+      "phone": "+212 XXX-XXXXXX",
+      "email": "info@moroccotourism.com",
+      "hours": "Verfügbar 24/7"
+    },
+    "form": {
+      "title": "Senden Sie uns eine Nachricht",
+      "name": "Ihr Name",
+      "namePlaceholder": "Geben Sie Ihren Namen ein",
+      "email": "Ihre E-Mail",
+      "emailPlaceholder": "Geben Sie Ihre E-Mail ein",
+      "subject": "Betreff",
+      "subjectPlaceholder": "Worum geht es?",
+      "message": "Nachricht",
+      "messagePlaceholder": "Sagen Sie uns, wie wir Ihnen helfen können...",
+      "submit": "Nachricht Senden",
+      "submitting": "Wird gesendet..."
+    },
+    "validation": {
+      "nameRequired": "Name ist erforderlich",
+      "emailRequired": "E-Mail ist erforderlich",
+      "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+      "subjectRequired": "Betreff ist erforderlich",
+      "messageRequired": "Nachricht ist erforderlich",
+      "messageMin": "Nachricht muss mindestens 10 Zeichen lang sein"
+    },
+    "success": "Nachricht erfolgreich gesendet! Wir werden uns bald bei Ihnen melden.",
+    "error": "Fehler beim Senden der Nachricht. Bitte versuchen Sie es erneut."
+  },
+  "footer": {
+    "description": "Entdecken Sie die Magie Marokkos mit authentischen Touren und unvergesslichen Erlebnissen.",
+    "quickLinks": "Schnelllinks",
+    "contact": "Kontaktinformationen",
+    "followUs": "Folgen Sie Uns",
+    "rights": "Alle Rechte vorbehalten."
+  },
+  "common": {
+    "loading": "Wird geladen...",
+    "error": "Etwas ist schief gelaufen",
+    "tryAgain": "Erneut Versuchen",
+    "close": "Schließen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "previous": "Vorherige"
+  },
+  "excursions": {
+    "title": "Tagesausflüge",
+    "description": "Entdecken Sie erstaunliche Tagesausflüge in Marokko",
+    "heroTitle": "Tagesausflüge",
+    "heroSubtitle": "Erkunden Sie Marokko mit unseren sorgfältig ausgewählten Tagesausflügen",
+    "loading": "Ausflüge werden geladen...",
+    "error": "Fehler beim Laden der Ausflüge",
+    "noExcursions": "Derzeit sind keine Ausflüge verfügbar.",
+    "checkBackLater": "Schauen Sie später für neue Tagesausflüge vorbei!",
+    "availableExcursions": "Verfügbare Ausflüge",
+    "excursion": "Ausflug",
+    "excursions": "Ausflüge",
+    "whyChooseTitle": "Warum Unsere Ausflüge Wählen?",
+    "flexibleTitle": "Flexible Dauer",
+    "flexibleDesc": "Perfekt für Reisende mit begrenzter Zeit",
+    "affordableTitle": "Erschwingliche Preise",
+    "affordableDesc": "Großartiges Preis-Leistungs-Verhältnis für alle Budgets",
+    "focusedTitle": "Fokussiertes Erlebnis",
+    "focusedDesc": "Entdecken Sie spezifische Attraktionen im Detail"
+  },
+  "tags": {
+    "whatsIncluded": "Was ist Enthalten",
+    "whatsNotIncluded": "Was ist NICHT Enthalten",
+    "noIncludedTags": "Noch keine \"Was ist Enthalten\" Tags",
+    "noNotIncludedTags": "Noch keine \"Was ist NICHT Enthalten\" Tags"
+  }
+}

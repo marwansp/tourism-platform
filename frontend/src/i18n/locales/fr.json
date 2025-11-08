@@ -6,6 +6,7 @@
     "navbar": {
         "home": "Accueil",
         "tours": "Circuits",
+        "excursions": "Excursions",
         "gallery": "Galerie",
         "booking": "Réservation",
         "contact": "Contact",
@@ -47,7 +48,8 @@
         "perPerson": "par personne",
         "loading": "Chargement des circuits...",
         "error": "Échec du chargement des circuits. Veuillez réessayer.",
-        "noTours": "Aucun circuit disponible pour le moment."
+        "noTours": "Aucun circuit disponible pour le moment.",
+        "translatedFromEnglish": "Traduit de l'anglais"
     },
     "tourDetails": {
         "bookTour": "Réserver ce Circuit",
@@ -70,7 +72,9 @@
         "aboutThisTour": "À Propos de Ce Circuit",
         "from": "À partir de",
         "customerReviews": "Avis des Clients",
-        "noReviews": "Aucun avis pour le moment. Soyez le premier à donner votre avis sur ce circuit !"
+        "noReviews": "Aucun avis pour le moment. Soyez le premier à donner votre avis sur ce circuit !",
+        "translatedFromEnglish": "Ce circuit est affiché en anglais car une traduction n'est pas disponible dans votre langue sélectionnée.",
+        "availableIn": "Disponible en"
     },
     "booking": {
         "title": "Réservez Votre Aventure",
@@ -203,5 +207,31 @@
         "back": "Retour",
         "next": "Suivant",
         "previous": "Précédent"
+    },
+    "excursions": {
+        "title": "Excursions d'une Journée",
+        "description": "Découvrez d'incroyables excursions d'une journée au Maroc",
+        "heroTitle": "Excursions d'une Journée",
+        "heroSubtitle": "Explorez le Maroc avec nos excursions d'une journée soigneusement sélectionnées",
+        "loading": "Chargement des excursions...",
+        "error": "Échec du chargement des excursions",
+        "noExcursions": "Aucune excursion disponible pour le moment.",
+        "checkBackLater": "Revenez plus tard pour de nouvelles excursions !",
+        "availableExcursions": "Excursions Disponibles",
+        "excursion": "excursion",
+        "excursions": "excursions",
+        "whyChooseTitle": "Pourquoi Choisir Nos Excursions ?",
+        "flexibleTitle": "Durée Flexible",
+        "flexibleDesc": "Parfait pour les voyageurs avec un temps limité",
+        "affordableTitle": "Prix Abordables",
+        "affordableDesc": "Excellent rapport qualité-prix pour tous les budgets",
+        "focusedTitle": "Expérience Ciblée",
+        "focusedDesc": "Découvrez des attractions spécifiques en profondeur"
+    },
+    "tags": {
+        "whatsIncluded": "Ce qui est Inclus",
+        "whatsNotIncluded": "Ce qui n'est PAS Inclus",
+        "noIncludedTags": "Aucune étiquette \"Ce qui est Inclus\" pour le moment",
+        "noNotIncludedTags": "Aucune étiquette \"Ce qui n'est PAS Inclus\" pour le moment"
     }
 }

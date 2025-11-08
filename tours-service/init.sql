@@ -40,7 +40,16 @@ ADD COLUMN IF NOT EXISTS duration_days INTEGER DEFAULT 1,
 ADD COLUMN IF NOT EXISTS duration_description VARCHAR(50),
 ADD COLUMN IF NOT EXISTS min_participants INTEGER DEFAULT 1,
 ADD COLUMN IF NOT EXISTS group_discount_threshold INTEGER DEFAULT 5,
-ADD COLUMN IF NOT EXISTS group_discount_percentage DECIMAL(5,2) DEFAULT 0.00;
+ADD COLUMN IF NOT EXISTS group_discount_percentage DECIMAL(5,2) DEFAULT 0.00,
+ADD COLUMN IF NOT EXISTS tour_type VARCHAR(20) NOT NULL DEFAULT 'tour';
+
+-- Add check constraint for tour_type
+ALTER TABLE tours 
+ADD CONSTRAINT IF NOT EXISTS check_tour_type 
+CHECK (tour_type IN ('tour', 'excursion'));
+
+-- Create index on tour_type for faster filtering
+CREATE INDEX IF NOT EXISTS idx_tours_tour_type ON tours(tour_type);
 
 -- Insert sample data with beautiful Moroccan tourism images and complete details
 INSERT INTO tours (title, description, price, duration, location, max_participants, difficulty_level, includes, available_dates, image_url) VALUES
@@ -86,10 +95,13 @@ CREATE TABLE IF NOT EXISTS tags (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL UNIQUE,
     icon VARCHAR(50),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+    category VARCHAR(20) NOT NULL DEFAULT 'included',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT check_tag_category CHECK (category IN ('included', 'not_included'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_tags_name ON tags(name);
+CREATE INDEX IF NOT EXISTS idx_tags_category ON tags(category);
 
 -- Create tour_tags junction table
 CREATE TABLE IF NOT EXISTS tour_tags (
@@ -122,8 +134,37 @@ INSERT INTO tags (name, icon) VALUES
     ('Luxury', '⭐')
 ON CONFLICT (name) DO NOTHING;
 
--
-- ============================================
+-- ============================================
+-- Dynamic Languages System
+-- ============================================
+
+-- Create languages table for dynamic multi-language system
+CREATE TABLE IF NOT EXISTS languages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    code VARCHAR(2) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    native_name VARCHAR(100) NOT NULL,
+    flag_emoji VARCHAR(10) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    is_default BOOLEAN DEFAULT FALSE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS idx_languages_code ON languages(code);
+CREATE INDEX IF NOT EXISTS idx_languages_active ON languages(is_active);
+
+-- Add constraint to ensure only one language can be default
+CREATE UNIQUE INDEX IF NOT EXISTS idx_languages_single_default ON languages(is_default) WHERE is_default = TRUE;
+
+-- Seed default languages (English and French)
+INSERT INTO languages (code, name, native_name, flag_emoji, is_active, is_default)
+VALUES 
+    ('en', 'English', 'English', '🇺🇸', TRUE, TRUE),
+    ('fr', 'French', 'Français', '🇫🇷', TRUE, FALSE)
+ON CONFLICT (code) DO NOTHING;
+
+-- ============================================
 -- Multilingual Support: Tour Translations
 -- ============================================
 
