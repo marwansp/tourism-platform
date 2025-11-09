@@ -76,7 +76,7 @@ const EditTourPage: React.FC = () => {
           })
         }
 
-        setTourData({
+        const tourDataToSet = {
           price: tourInfo.price,
           duration: tourInfo.duration,
           max_participants: tourInfo.max_participants,
@@ -85,7 +85,13 @@ const EditTourPage: React.FC = () => {
           image_url: tourInfo.images?.[0]?.image_url || '',
           images: tourInfo.images || [],
           translations
-        })
+        }
+        
+        console.log('EditTourPage - Setting tour data:', tourDataToSet)
+        console.log('EditTourPage - Translations count:', translations.length)
+        console.log('EditTourPage - Languages:', translations.map(t => t.language_code))
+        
+        setTourData(tourDataToSet)
 
         setLoading(false)
       } catch (error) {

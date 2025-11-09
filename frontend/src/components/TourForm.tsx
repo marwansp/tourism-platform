@@ -105,6 +105,8 @@ const TourForm: React.FC<TourFormProps> = ({
 
   // Load existing translations and images when editing
   useEffect(() => {
+    console.log('TourForm - useEffect triggered, initialData:', initialData)
+    
     if (initialData?.translations && initialData.translations.length > 0) {
       const translationsMap: Record<string, TranslationData> = {}
       const langCodes: string[] = []
@@ -114,9 +116,14 @@ const TourForm: React.FC<TourFormProps> = ({
         langCodes.push(trans.language_code)
       })
       
+      console.log('TourForm - Setting selected languages:', langCodes)
+      console.log('TourForm - Translations map:', translationsMap)
+      
       setTranslations(translationsMap)
       setSelectedLanguages(langCodes)
       setActiveTab(langCodes[0] || 'en')
+    } else {
+      console.log('TourForm - No translations in initialData')
     }
     
     // Load images if provided
