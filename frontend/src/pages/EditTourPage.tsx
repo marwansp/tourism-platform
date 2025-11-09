@@ -49,6 +49,7 @@ const EditTourPage: React.FC = () => {
         // Fetch available languages for this tour
         const langResponse = await toursApi.get(`/tours/${tourId}/available-languages`)
         const languages = langResponse.data.available_languages
+        console.log('EditTourPage - Available languages from API:', languages)
         setAvailableLanguages(languages)
 
         // Fetch tour data in all available languages
@@ -56,10 +57,12 @@ const EditTourPage: React.FC = () => {
         let tourInfo: any = null
 
         for (const lang of languages) {
+          console.log('EditTourPage - Fetching tour for language:', lang)
           const response = await toursApi.get(`/tours/${tourId}`, {
             params: { lang }
           })
           const tour = response.data
+          console.log('EditTourPage - Received tour data for', lang, ':', tour.title)
 
           if (!tourInfo) {
             tourInfo = tour
