@@ -136,20 +136,42 @@ const DynamicTourAdminPage: React.FC = () => {
       const langResponse = await toursService.getTourAvailableLanguages(tour.id)
       const availableLanguages = langResponse.available_languages || ['en']
       
+      console.log('Fetching translations for languages:', availableLanguages)
+      
       // Fetch tour data in all available languages
       const translations = []
       for (const lang of availableLanguages) {
-        const tourData = await toursService.getTourById(tour.id, lang)
+        try {
+          const tourData = await toursService.getTourById(tour.id, lang)
+          translations.push({
+            language_code: lang,
+            title: tourData.title,
+            description: tourData.description,
+            location: tourData.location,
+            itinerary: Array.isArray(tourData.includes) 
+              ? tourData.includes.join('\n') 
+              : (tourData.includes || '')
+          })
+        } catch (langError) {
+          console.error(`Failed to fetch ${lang} translation:`, langError)
+          // Continue with other languages
+        }
+      }
+      
+      // If no translations were fetched, use the tour data we have
+      if (translations.length === 0) {
         translations.push({
-          language_code: lang,
-          title: tourData.title,
-          description: tourData.description,
-          location: tourData.location,
-          itinerary: Array.isArray(tourData.includes) 
-            ? tourData.includes.join('\n') 
-            : (tourData.includes || '')
+          language_code: 'en',
+          title: tour.title || '',
+          description: tour.description || '',
+          location: tour.location || '',
+          itinerary: Array.isArray(tour.includes) 
+            ? tour.includes.join('\n') 
+            : (tour.includes || '')
         })
       }
+      
+      console.log('Fetched translations:', translations)
       
       // Create tour with all translations
       const tourWithTranslations = {
@@ -161,8 +183,19 @@ const DynamicTourAdminPage: React.FC = () => {
     } catch (error) {
       console.error('Error fetching tour translations:', error)
       toast.error('Failed to load tour translations')
-      // Fallback to basic tour data
-      setEditingTour(tour)
+      
+      // Fallback: create minimal translation from tour data
+      const fallbackTour = {
+        ...tour,
+        allTranslations: [{
+          language_code: 'en',
+          title: tour.title || '',
+          description: tour.description || '',
+          location: tour.location || '',
+          itinerary: ''
+        }]
+      }
+      setEditingTour(fallbackTour as any)
     }
   }
 
