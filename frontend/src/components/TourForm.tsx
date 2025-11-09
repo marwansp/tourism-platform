@@ -74,9 +74,11 @@ const TourForm: React.FC<TourFormProps> = ({
         const languages = await languagesService.getActiveLanguages()
         setActiveLanguages(languages)
         
-        // Ensure English is selected by default
-        if (!selectedLanguages.includes('en')) {
-          setSelectedLanguages(['en'])
+        // Only set default English if no initialData translations exist
+        if (!initialData?.translations || initialData.translations.length === 0) {
+          if (!selectedLanguages.includes('en')) {
+            setSelectedLanguages(['en'])
+          }
         }
       } catch (error) {
         console.error('Failed to fetch languages:', error)
