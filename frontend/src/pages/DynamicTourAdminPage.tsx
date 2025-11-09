@@ -132,16 +132,14 @@ const DynamicTourAdminPage: React.FC = () => {
 
   const handleEditTour = async (tour: Tour) => {
     try {
-      // Fetch available languages for this tour
-      const langResponse = await fetch(`/api/tours/${tour.id}/available-languages`)
-      const langData = await langResponse.json()
-      const availableLanguages = langData.available_languages || ['en']
+      // Fetch available languages for this tour using toursApi
+      const langResponse = await toursService.getTourAvailableLanguages(tour.id)
+      const availableLanguages = langResponse.available_languages || ['en']
       
       // Fetch tour data in all available languages
       const translations = []
       for (const lang of availableLanguages) {
-        const response = await fetch(`/api/tours/${tour.id}?lang=${lang}`)
-        const tourData = await response.json()
+        const tourData = await toursService.getTourById(tour.id, lang)
         translations.push({
           language_code: lang,
           title: tourData.title,

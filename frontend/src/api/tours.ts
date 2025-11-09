@@ -217,6 +217,17 @@ export const toursService = {
     }
   },
 
+  // Get available languages for a tour
+  async getTourAvailableLanguages(id: string): Promise<{ tour_id: string; available_languages: string[] }> {
+    try {
+      const response = await toursApi.get(`/tours/${id}/available-languages`)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching tour available languages:', error)
+      throw new Error('Failed to fetch tour available languages')
+    }
+  },
+
   // Get featured tours (first 3 tours) with language support
   async getFeaturedTours(lang: string = 'en'): Promise<Tour[]> {
     try {
