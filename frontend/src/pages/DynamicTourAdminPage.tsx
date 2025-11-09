@@ -130,8 +130,42 @@ const DynamicTourAdminPage: React.FC = () => {
     }
   }
 
-  const handleEditTour = (tour: Tour) => {
-    setEditingTour(tour)
+  const handleEditTour = async (tour: Tour) => {
+    try {
+      // Fetch available languages for this tour
+      const langResponse = await fetch(`/api/tours/${tour.id}/available-languages`)
+      const langData = await langResponse.json()
+      const availableLanguages = langData.available_languages || ['en']
+      
+      // Fetch tour data in all available languages
+      const translations = []
+      for (const lang of availableLanguages) {
+        const response = await fetch(`/api/tours/${tour.id}?lang=${lang}`)
+        const tourData = await response.json()
+        translations.push({
+          language_code: lang,
+          title: tourData.title,
+          description: tourData.description,
+          location: tourData.location,
+          itinerary: Array.isArray(tourData.includes) 
+            ? tourData.includes.join('\n') 
+            : (tourData.includes || '')
+        })
+      }
+      
+      // Create tour with all translations
+      const tourWithTranslations = {
+        ...tour,
+        allTranslations: translations
+      }
+      
+      setEditingTour(tourWithTranslations as any)
+    } catch (error) {
+      console.error('Error fetching tour translations:', error)
+      toast.error('Failed to load tour translations')
+      // Fallback to basic tour data
+      setEditingTour(tour)
+    }
   }
 
   const handleDeleteTour = async (tourId: string) => {
@@ -154,7 +188,7 @@ const DynamicTourAdminPage: React.FC = () => {
   }
 
   // Convert tour data to form format for editing
-  const convertTourToFormData = (tour: Tour): TourFormData => {
+  const convertTourToFormData = (tour: Tour & { allTranslations?: any[] }): TourFormData => {
     return {
       price: Number(tour.price),
       duration: tour.duration,
@@ -162,7 +196,9 @@ const DynamicTourAdminPage: React.FC = () => {
       difficulty_level: tour.difficulty_level,
       tour_type: tour.tour_type || 'tour',
       image_url: tour.images?.[0]?.image_url || '',
-      translations: [
+      images: tour.images || [],
+      // Use all translations if available, otherwise fallback to English only
+      translations: tour.allTranslations || [
         {
           language_code: 'en',
           title: tour.title,

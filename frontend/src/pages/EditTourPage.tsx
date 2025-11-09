@@ -39,9 +39,15 @@ const EditTourPage: React.FC = () => {
   const [tourData, setTourData] = useState<TourData | null>(null)
   const [availableLanguages, setAvailableLanguages] = useState<string[]>([])
 
+  console.log('EditTourPage - Component rendered, tourId:', tourId)
+
   useEffect(() => {
+    console.log('EditTourPage - useEffect triggered, tourId:', tourId)
     const fetchTourData = async () => {
-      if (!tourId) return
+      if (!tourId) {
+        console.log('EditTourPage - No tourId, returning early')
+        return
+      }
 
       try {
         setLoading(true)
