@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, Calendar, MessageSquare, Settings as SettingsIcon, Globe } from 'lucide-react'
+import { Plus, Edit, Trash2, Calendar, MessageSquare, Settings as SettingsIcon, Globe, Eye, EyeOff, CheckCircle, XCircle, Clock, Star } from 'lucide-react'
 import toast from 'react-hot-toast'
 import TourForm from '../components/TourForm'
 import { toursService } from '../api/tours'
@@ -7,6 +7,9 @@ import type { Tour } from '../api/tours'
 import { bookingsService, BookingResponse } from '../api/bookings'
 import { messagingService, NotificationResponse } from '../api/messaging'
 import LanguageManager from '../components/LanguageManager'
+import GroupPricingManager from '../components/GroupPricingManager'
+import TagManager from '../components/TagManager'
+import TourInfoSectionsManager from '../components/TourInfoSectionsManager'
 
 interface TourImage {
   image_url: string
@@ -33,10 +36,11 @@ interface TourFormData {
 }
 
 const DynamicTourAdminPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'tours' | 'bookings' | 'messages' | 'languages'>('tours')
+  const [activeTab, setActiveTab] = useState<'tours' | 'bookings' | 'messages' | 'settings' | 'languages'>('tours')
   const [tours, setTours] = useState<Tour[]>([])
   const [bookings, setBookings] = useState<BookingResponse[]>([])
   const [messages, setMessages] = useState<NotificationResponse[]>([])
+  const [selectedTourForSettings, setSelectedTourForSettings] = useState<Tour | null>(null)
   const [loading, setLoading] = useState(true)
   const [bookingsLoading, setBookingsLoading] = useState(false)
   const [messagesLoading, setMessagesLoading] = useState(false)
@@ -78,6 +82,82 @@ const DynamicTourAdminPage: React.FC = () => {
       console.error('Error fetching messages:', error)
     } finally {
       setMessagesLoading(false)
+    }
+  }
+
+  const handleMarkAsViewed = async (bookingId: string) => {
+    try {
+      await bookingsService.markAsViewed(bookingId)
+      setBookings(prev => prev.map(booking =>
+        booking.id === bookingId
+          ? { ...booking, admin_viewed: true }
+          : booking
+      ))
+      toast.success('Booking marked as viewed')
+    } catch (error) {
+      toast.error('Failed to mark booking as viewed')
+      console.error('Error marking booking as viewed:', error)
+    }
+  }
+
+  const handleUpdateBookingStatus = async (bookingId: string, status: 'pending' | 'confirmed' | 'cancelled' | 'completed') => {
+    try {
+      await bookingsService.updateBookingStatus(bookingId, status)
+      setBookings(prev => prev.map(booking =>
+        booking.id === bookingId
+          ? { ...booking, status }
+          : booking
+      ))
+      toast.success(`Booking ${status} successfully`)
+    } catch (error) {
+      toast.error(`Failed to ${status} booking`)
+      console.error('Error updating booking status:', error)
+    }
+  }
+
+  const handleCompleteBooking = async (bookingId: string) => {
+    if (!confirm('Mark this booking as completed? This will send a review request to the customer.')) {
+      return
+    }
+
+    try {
+      const result = await bookingsService.completeBooking(bookingId)
+      setBookings(prev => prev.map(booking =>
+        booking.id === bookingId
+          ? { ...booking, status: 'completed' }
+          : booking
+      ))
+      toast.success('Booking completed and review request sent!')
+      console.log('Review token:', result.review_token)
+    } catch (error) {
+      toast.error('Failed to complete booking')
+      console.error('Error completing booking:', error)
+    }
+  }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return <CheckCircle className="w-4 h-4 text-green-600" />
+      case 'cancelled':
+        return <XCircle className="w-4 h-4 text-red-600" />
+      case 'completed':
+        return <Star className="w-4 h-4 text-blue-600" />
+      default:
+        return <Clock className="w-4 h-4 text-yellow-600" />
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return 'bg-green-100 text-green-800'
+      case 'cancelled':
+        return 'bg-red-100 text-red-800'
+      case 'completed':
+        return 'bg-blue-100 text-blue-800'
+      default:
+        return 'bg-yellow-100 text-yellow-800'
     }
   }
 
@@ -325,6 +405,17 @@ const DynamicTourAdminPage: React.FC = () => {
               Messages
             </button>
             <button
+              onClick={() => setActiveTab('settings')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+                activeTab === 'settings'
+                  ? 'bg-white text-orange-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <SettingsIcon className="w-4 h-4" />
+              Settings
+            </button>
+            <button
               onClick={() => setActiveTab('languages')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
                 activeTab === 'languages'
@@ -458,49 +549,186 @@ const DynamicTourAdminPage: React.FC = () => {
 
         {/* Bookings Tab */}
         {activeTab === 'bookings' && (
-          <div className="bg-white shadow-md rounded-lg overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
+          <>
+            <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-gray-900">Bookings Management</h2>
+              <div className="flex items-center gap-4 text-sm text-gray-600">
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  {bookings.length} total bookings
+                </span>
+                <span className="flex items-center gap-1">
+                  <EyeOff className="w-4 h-4" />
+                  {bookings.filter(b => !b.admin_viewed).length} unviewed
+                </span>
+              </div>
             </div>
+
             {bookingsLoading ? (
-              <div className="p-6 text-center text-gray-500">Loading bookings...</div>
-            ) : bookings.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">No bookings yet</div>
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Loading bookings...</p>
+              </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="bg-white shadow-md rounded-lg overflow-hidden">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tour</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Customer
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Tour & Dates
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Participants & Price
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Created
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {bookings.map((booking) => (
-                      <tr key={booking.id}>
-                        <td className="px-6 py-4 text-sm text-gray-900">{booking.tour_id}</td>
-                        <td className="px-6 py-4 text-sm text-gray-900">{booking.customer_name}</td>
-                        <td className="px-6 py-4 text-sm text-gray-500">{new Date(booking.start_date).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 text-sm">
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                            booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {booking.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">{booking.total_price}€</td>
-                      </tr>
-                    ))}
+                    {bookings.map((booking) => {
+                      const tour = tours.find(t => t.id === booking.tour_id)
+                      return (
+                        <tr key={booking.id} className={!booking.admin_viewed ? 'bg-blue-50' : ''}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              {!booking.admin_viewed && (
+                                <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                              )}
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {booking.customer_name}
+                                </div>
+                                <div className="text-sm text-gray-500">{booking.email}</div>
+                                {booking.phone && (
+                                  <div className="text-sm text-gray-500">{booking.phone}</div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900 font-medium">
+                              {tour?.title || 'Unknown Tour'}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {booking.start_date && booking.end_date ? (
+                                <>
+                                  {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
+                                  <div className="text-xs text-gray-400">
+                                    {Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1} days
+                                  </div>
+                                </>
+                              ) : (
+                                booking.travel_date ? new Date(booking.travel_date).toLocaleDateString() : 'No date'
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {booking.number_of_participants || 1} participant{(booking.number_of_participants || 1) > 1 ? 's' : ''}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {booking.price_per_person}€/day
+                            </div>
+                            <div className="text-sm font-semibold text-green-600">
+                              Total: {booking.total_price}€
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
+                              {getStatusIcon(booking.status)}
+                              <span className="ml-1 capitalize">{booking.status}</span>
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(booking.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex items-center space-x-2">
+                              {!booking.admin_viewed && (
+                                <button
+                                  onClick={() => handleMarkAsViewed(booking.id)}
+                                  className="text-blue-600 hover:text-blue-900"
+                                  title="Mark as viewed"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                              )}
+
+                              {booking.status === 'pending' && (
+                                <>
+                                  <button
+                                    onClick={() => handleUpdateBookingStatus(booking.id, 'confirmed')}
+                                    className="text-green-600 hover:text-green-900"
+                                    title="Confirm booking"
+                                  >
+                                    <CheckCircle className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleUpdateBookingStatus(booking.id, 'cancelled')}
+                                    className="text-red-600 hover:text-red-900"
+                                    title="Cancel booking"
+                                  >
+                                    <XCircle className="w-4 h-4" />
+                                  </button>
+                                </>
+                              )}
+
+                              {booking.status === 'confirmed' && (
+                                <>
+                                  <button
+                                    onClick={() => handleCompleteBooking(booking.id)}
+                                    className="text-blue-600 hover:text-blue-900"
+                                    title="Mark as completed (sends review request)"
+                                  >
+                                    <Star className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleUpdateBookingStatus(booking.id, 'cancelled')}
+                                    className="text-red-600 hover:text-red-900"
+                                    title="Cancel booking"
+                                  >
+                                    <XCircle className="w-4 h-4" />
+                                  </button>
+                                </>
+                              )}
+
+                              {booking.status === 'cancelled' && (
+                                <button
+                                  onClick={() => handleUpdateBookingStatus(booking.id, 'confirmed')}
+                                  className="text-green-600 hover:text-green-900"
+                                  title="Reconfirm booking"
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
+
+                {bookings.length === 0 && (
+                  <div className="text-center py-12">
+                    <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">No bookings yet</p>
+                    <p className="text-sm text-gray-400">Bookings will appear here when customers make reservations</p>
+                  </div>
+                )}
               </div>
             )}
-          </div>
+          </>
         )}
 
         {/* Messages Tab */}
@@ -537,6 +765,67 @@ const DynamicTourAdminPage: React.FC = () => {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">Tour Settings</h2>
+            </div>
+
+            {/* Tour Selector */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Tour to Manage
+              </label>
+              <select
+                value={selectedTourForSettings?.id || ''}
+                onChange={(e) => {
+                  const tour = tours.find(t => t.id === e.target.value)
+                  setSelectedTourForSettings(tour || null)
+                }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-moroccan-terracotta focus:border-transparent"
+              >
+                <option value="">-- Select a tour --</option>
+                {tours.map((tour) => (
+                  <option key={tour.id} value={tour.id}>
+                    {tour.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedTourForSettings && (
+              <>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Group Pricing Manager */}
+                  <GroupPricingManager
+                    tourId={selectedTourForSettings.id}
+                    tourTitle={selectedTourForSettings.title}
+                  />
+
+                  {/* Tag Manager for Tour */}
+                  <TagManager
+                    tourId={selectedTourForSettings.id}
+                    tourTitle={selectedTourForSettings.title}
+                    mode="tour"
+                  />
+                </div>
+
+                {/* Tour Info Sections Manager */}
+                <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+                  <TourInfoSectionsManager tourId={selectedTourForSettings.id} />
+                </div>
+              </>
+            )}
+
+            {/* Global Tag Manager */}
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Global Tag Management</h3>
+              <TagManager mode="global" />
+            </div>
           </div>
         )}
 
