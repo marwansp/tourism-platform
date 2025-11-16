@@ -43,8 +43,8 @@ function App() {
           <Route path="/booking" element={<BookingPageV2 />} />
           <Route path="/gallery" element={<GalleryPage />} />
           <Route path="/contact" element={<ContactPage />} />
-          <Route path="/admin" element={<DynamicTourAdminPage />} />
-          <Route path="/admin/tours/:tourId/edit" element={<EditTourPage />} />
+          <Route path="/ac-er33-2434-244" element={<DynamicTourAdminPage />} />
+          <Route path="/ac-er33-2434-244/tours/:tourId/edit" element={<EditTourPage />} />
           <Route path="/review/:token" element={<ReviewPage />} />
         </Routes>
       </main>

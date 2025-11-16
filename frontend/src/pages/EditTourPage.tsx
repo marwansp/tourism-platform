@@ -144,7 +144,7 @@ const EditTourPage: React.FC = () => {
 
       await toursApi.put(`/tours/v2/${tourId}`, updateData)
       toast.success('Tour updated successfully!')
-      navigate('/admin')
+      navigate('/ac-er33-2434-244')
     } catch (error: any) {
       const errorMessage = error.response?.data?.detail || 'Failed to update tour'
       toast.error(errorMessage)
@@ -153,7 +153,7 @@ const EditTourPage: React.FC = () => {
   }
 
   const handleCancel = () => {
-    navigate('/admin')
+    navigate('/ac-er33-2434-244')
   }
 
   if (loading) {
@@ -173,7 +173,7 @@ const EditTourPage: React.FC = () => {
         <div className="text-center">
           <p className="text-red-600 mb-4">Failed to load tour data</p>
           <button
-            onClick={() => navigate('/admin')}
+            onClick={() => navigate('/ac-er33-2434-244')}
             className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700"
           >
             Back to Admin

@@ -19,7 +19,6 @@ const Navbar = () => {
     { name: t('navbar.gallery'), href: '/gallery' },
     { name: t('navbar.booking'), href: '/booking' },
     { name: t('navbar.contact'), href: '/contact' },
-    { name: 'Admin', href: '/admin' },
   ]
 
   // Fetch active languages on component mount with caching
