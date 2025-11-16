@@ -571,7 +571,8 @@ const DynamicTourAdminPage: React.FC = () => {
               </div>
             ) : (
               <div className="bg-white shadow-md rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -653,7 +654,7 @@ const DynamicTourAdminPage: React.FC = () => {
                             {new Date(booking.created_at).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 min-w-[120px]">
                               {!booking.admin_viewed && (
                                 <button
                                   onClick={() => handleMarkAsViewed(booking.id)}
@@ -718,6 +719,7 @@ const DynamicTourAdminPage: React.FC = () => {
                     })}
                   </tbody>
                 </table>
+                </div>
 
                 {bookings.length === 0 && (
                   <div className="text-center py-12">
