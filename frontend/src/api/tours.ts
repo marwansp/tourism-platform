@@ -228,6 +228,16 @@ export const toursService = {
     }
   },
 
+  // Delete a tour
+  async deleteTour(id: string): Promise<void> {
+    try {
+      await toursApi.delete(`/tours/${id}`)
+    } catch (error) {
+      console.error('Error deleting tour:', error)
+      throw new Error('Failed to delete tour')
+    }
+  },
+
   // Get featured tours (first 3 tours) with language support
   async getFeaturedTours(lang: string = 'en'): Promise<Tour[]> {
     try {

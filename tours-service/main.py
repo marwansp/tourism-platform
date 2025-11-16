@@ -324,6 +324,7 @@ async def update_tour_with_dynamic_languages(
             duration=tour_data.duration,
             max_participants=tour_data.max_participants,
             difficulty_level=tour_data.difficulty_level,
+            tour_type=tour_data.tour_type,
             includes=tour_data.includes,
             available_dates=tour_data.available_dates,
             images=tour_data.images

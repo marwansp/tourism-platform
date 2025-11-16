@@ -203,8 +203,7 @@ const DynamicTourAdminPage: React.FC = () => {
     if (!confirm('Are you sure you want to delete this tour?')) return
 
     try {
-      // Note: You'll need to add a delete method to toursService
-      await fetch(`/api/tours/${tourId}`, { method: 'DELETE' })
+      await toursService.deleteTour(tourId)
       toast.success('Tour deleted successfully!')
       fetchTours()
     } catch (error) {
