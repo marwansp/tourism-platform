@@ -5,6 +5,7 @@ import { Helmet } from 'react-helmet-async'
 import { ArrowLeft, Clock, ChevronLeft, ChevronRight, Star, Users, Tag, ChevronDown, ChevronUp, Globe } from 'lucide-react'
 import { Tour, toursService, GroupPricing, TourTag, TourInfoSection } from '../api/tours'
 import { languagesService, Language } from '../api/languages'
+import { formatPriceWithCurrency } from '../utils/formatPrice'
 
 interface Review {
     id: string;
@@ -355,7 +356,7 @@ const TourDetailsPage = () => {
                                         <span className="font-medium">{t('tourDetails.duration')}: {tour.duration}</span>
                                     </div>
                                     <div className="flex items-center space-x-2 text-moroccan-terracotta">
-                                        <span className="font-semibold text-xl">{t('tourDetails.from')} €{Number.isInteger(Number(tour.price)) ? Math.floor(Number(tour.price)) : Number(tour.price).toFixed(2)} {t('tourDetails.perPerson')}</span>
+                                        <span className="font-semibold text-xl">{t('tourDetails.from')} {formatPriceWithCurrency(tour.price)} {t('tourDetails.perPerson')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -436,7 +437,7 @@ const TourDetailsPage = () => {
                                                     }
                                                 </span>
                                                 <span className="text-moroccan-terracotta font-bold">
-                                                    €{Number.isInteger(Number(pricing.price_per_person)) ? Math.floor(Number(pricing.price_per_person)) : Number(pricing.price_per_person).toFixed(2)} {t('tourDetails.perPerson')}
+                                                    {formatPriceWithCurrency(pricing.price_per_person)} {t('tourDetails.perPerson')}
                                                 </span>
                                             </div>
                                         ))}

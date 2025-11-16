@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Clock, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Tour } from '../api/tours'
 import { Language, languagesService } from '../api/languages'
+import { formatPriceWithCurrency } from '../utils/formatPrice'
 
 interface TourCardProps {
   tour: Tour
@@ -239,7 +240,7 @@ const TourCard = ({ tour, showBookButton = true }: TourCardProps) => {
             <span className="text-sm">{tour.duration}</span>
           </div>
           <div className="flex items-center space-x-1 text-moroccan-terracotta font-semibold">
-            <span>From €{Number.isInteger(Number(tour.price)) ? Math.floor(Number(tour.price)) : Number(tour.price).toFixed(2)} per person</span>
+            <span>From {formatPriceWithCurrency(tour.price)} per person</span>
           </div>
         </div>
 

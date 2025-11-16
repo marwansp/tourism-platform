@@ -14,3 +14,14 @@ export const formatPrice = (price: number | string): string => {
   // Otherwise, format with 2 decimal places
   return numPrice.toFixed(2)
 }
+
+/**
+ * Format price with currency symbol (European format: 66€)
+ * @param price - The price to format
+ * @param currency - Currency symbol (default: €)
+ * @returns Formatted price string with currency symbol after the number
+ */
+export const formatPriceWithCurrency = (price: number | string, currency: string = '€'): string => {
+  const formattedPrice = formatPrice(price)
+  return `${formattedPrice}${currency}`
+}
